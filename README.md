@@ -26,9 +26,19 @@ npm run build
 
 ## Project documents
 
-- [Product specification](docs/PROJECT_SPEC.md)
-- [Official hackathon requirements](docs/OFFICIAL_HACKATHON_REQUIREMENTS.md)
+- [Product specification](docs/product/PROJECT_SPEC.md)
+- [Official hackathon requirements](docs/hackathon/OFFICIAL_HACKATHON_REQUIREMENTS.md)
+- [Development specs and plans](docs/development/)
 - [Agent instructions](AGENTS.md)
+
+## Repository structure
+
+- `src/app/`: Next.js pages and route handlers
+- `src/features/`: product modules and their public contracts
+- `docs/product/`: product requirements and acceptance criteria
+- `docs/hackathon/`: official event rules and submission requirements
+- `docs/development/`: approved designs and implementation plans
+- `tests/`: unit, integration, fixture, and end-to-end tests as they are introduced
 
 ## Planned implementation order
 

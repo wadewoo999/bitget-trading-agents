@@ -268,4 +268,4 @@ interface PaperTradeRecord {
 6. GetAgent Playbook。
 7. Evidence、README、Vercel 與 submission materials。
 
-詳細官方活動規則見 [`OFFICIAL_HACKATHON_REQUIREMENTS.md`](OFFICIAL_HACKATHON_REQUIREMENTS.md)。
+詳細官方活動規則見 [`OFFICIAL_HACKATHON_REQUIREMENTS.md`](../hackathon/OFFICIAL_HACKATHON_REQUIREMENTS.md)。

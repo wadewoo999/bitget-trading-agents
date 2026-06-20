@@ -49,7 +49,7 @@
 
 ## 詳細文件
 
-- 完整產品規格、資料契約、風險規則與驗收標準：[`docs/PROJECT_SPEC.md`](docs/PROJECT_SPEC.md)
-- 官方活動規則、提交要求與原始內容鏡像：[`docs/OFFICIAL_HACKATHON_REQUIREMENTS.md`](docs/OFFICIAL_HACKATHON_REQUIREMENTS.md)
+- 完整產品規格、資料契約、風險規則與驗收標準：[`docs/product/PROJECT_SPEC.md`](docs/product/PROJECT_SPEC.md)
+- 官方活動規則、提交要求與原始內容鏡像：[`docs/hackathon/OFFICIAL_HACKATHON_REQUIREMENTS.md`](docs/hackathon/OFFICIAL_HACKATHON_REQUIREMENTS.md)
 
 實作前先閱讀以上兩份文件；若文件與程式行為不一致，先更新規格並確認，再修改程式。
