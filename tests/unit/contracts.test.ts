@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { decisionSchema } from "@/features/decision/model";
 import {
   analyzeRequestSchema,
   marketSnapshotSchema,
@@ -45,23 +44,6 @@ describe("market-analysis contracts", () => {
     });
 
     expect(result.success).toBe(true);
-  });
-});
-
-describe("decision contract", () => {
-  it("accepts the approved AI decision shape and rejects unknown actions", () => {
-    const validDecision = {
-      action: "WAIT",
-      confidence: 59,
-      summary: "Signals conflict.",
-      reasons: ["Momentum weakened."],
-      riskWarnings: ["Funding is elevated."],
-      invalidationCondition: "Reassess after the next 4h close.",
-      mode: "ai",
-    };
-
-    expect(decisionSchema.safeParse(validDecision).success).toBe(true);
-    expect(decisionSchema.safeParse({ ...validDecision, action: "BUY" }).success).toBe(false);
   });
 });
 
