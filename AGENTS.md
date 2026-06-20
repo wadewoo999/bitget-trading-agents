@@ -49,7 +49,8 @@
 
 ## 詳細文件
 
+- 第一版目前實作依據：[`docs/development/specs/2026-06-20-minimum-demo-design.md`](docs/development/specs/2026-06-20-minimum-demo-design.md)
 - 完整產品規格、資料契約、風險規則與驗收標準：[`docs/product/PROJECT_SPEC.md`](docs/product/PROJECT_SPEC.md)
 - 官方活動規則、提交要求與原始內容鏡像：[`docs/hackathon/OFFICIAL_HACKATHON_REQUIREMENTS.md`](docs/hackathon/OFFICIAL_HACKATHON_REQUIREMENTS.md)
 
-實作前先閱讀以上兩份文件；若文件與程式行為不一致，先更新規格並確認，再修改程式。
+實作前先閱讀以上文件。第一版以 Minimum Demo Design 為準；若該設計、完整產品規格與程式行為不一致，先更新規格並確認，再修改程式。

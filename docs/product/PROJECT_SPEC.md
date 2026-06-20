@@ -1,5 +1,9 @@
 # BTC Trading Decision Agent — Product Spec
 
+## 文件定位
+
+本文件描述完整產品目標。第一版開發以 [`Minimum Executable Demo Design`](../development/specs/2026-06-20-minimum-demo-design.md) 為實作依據；兩者不一致時，第一版以 Demo Design 為準，完整產品能力於後續階段逐步加入。
+
 ## 1. 產品定位
 
 目標使用者是對當前市場方向沒有明確判斷，或面對互相衝突訊號時難以採取行動的 crypto 交易者。

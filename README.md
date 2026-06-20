@@ -26,7 +26,8 @@ npm run build
 
 ## Project documents
 
-- [Product specification](docs/product/PROJECT_SPEC.md)
+- [Current Minimum Demo design](docs/development/specs/2026-06-20-minimum-demo-design.md)
+- [Long-term product specification](docs/product/PROJECT_SPEC.md)
 - [Official hackathon requirements](docs/hackathon/OFFICIAL_HACKATHON_REQUIREMENTS.md)
 - [Development specs and plans](docs/development/)
 - [Agent instructions](AGENTS.md)
