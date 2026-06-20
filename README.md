@@ -4,7 +4,9 @@ BTC Trading Decision Agent for the **Bitget AI Base Camp Hackathon S1** Trading 
 
 ## Current status
 
-This repository is currently the project foundation. It defines the application structure and public contracts, but it does not yet provide market analysis, AI decisions, paper trading, backtesting, or live trading.
+This repository now includes a read-only Phase 2 Sample Market Analysis Dashboard. It calculates deterministic BTCUSDT indicators and LONG, SHORT, or WAIT decisions from four committed real Bitget historical snapshots.
+
+The Dashboard always displays `SAMPLE DATA`. It does not fetch live market data, execute trades, use an LLM, or provide paper trading yet.
 
 ## Local setup
 
@@ -43,10 +45,9 @@ npm run build
 
 ## Planned implementation order
 
-1. Market analysis
-2. Decision engine
-3. Paper trading
-4. Strategy Lab and backtesting
-5. GetAgent Playbook evidence
+1. Live Agent Hub market data
+2. Paper trading
+3. Strategy Lab and backtesting
+4. GetAgent Playbook evidence
 
 The MVP is simulation-first and does not execute real-money trades.

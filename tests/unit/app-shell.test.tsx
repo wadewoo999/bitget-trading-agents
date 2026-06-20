@@ -4,28 +4,11 @@ import { describe, expect, it } from "vitest";
 import HomePage from "@/app/page";
 
 describe("HomePage", () => {
-  it("identifies the product and its hackathon track", () => {
+  it("renders the real Sample analysis workspace", () => {
     render(<HomePage />);
-
-    expect(
-      screen.getByRole("heading", { name: "BTC Trading Decision Agent" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Bitget AI Base Camp Hackathon S1/i),
-    ).toBeInTheDocument();
-    expect(screen.getByText("MVP Foundation")).toBeInTheDocument();
-  });
-
-  it("links to the approved project documents", () => {
-    render(<HomePage />);
-
-    expect(screen.getByRole("link", { name: "Product specification" })).toHaveAttribute(
-      "href",
-      "https://github.com/wadewoo999/bitget-trading-agents/blob/main/docs/product/PROJECT_SPEC.md",
-    );
-    expect(screen.getByRole("link", { name: "Hackathon requirements" })).toHaveAttribute(
-      "href",
-      "https://github.com/wadewoo999/bitget-trading-agents/blob/main/docs/hackathon/OFFICIAL_HACKATHON_REQUIREMENTS.md",
-    );
+    expect(screen.getByRole("heading", { name: "釐清當前 BTC 交易方向" })).toBeInTheDocument();
+    expect(screen.getByText(/SAMPLE DATA/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "分析市場" })).toBeInTheDocument();
+    ["15m", "1h", "4h", "1d"].forEach((label) => expect(screen.getByRole("button", { name: label })).toBeInTheDocument());
   });
 });

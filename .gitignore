@@ -21,3 +21,4 @@ public/evidence/local/
 # Editor and OS files
 .DS_Store
 *.log
+.superpowers/

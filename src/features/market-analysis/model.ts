@@ -59,6 +59,15 @@ export const marketSourceSchema = z.object({
   url: z.string().url(),
 });
 
+export const chartPointSchema = z.object({
+  timestamp: z.string().datetime(),
+  close: z.number().positive(),
+  ema20: z.number().positive(),
+  ema50: z.number().positive(),
+  ema100: z.number().positive(),
+  ema200: z.number().positive(),
+});
+
 export const analyzeRequestSchema = z.object({
   symbol: z.literal("BTCUSDT"),
   timeframe: timeframeSchema,
@@ -72,6 +81,7 @@ export const analyzeResponseSchema = z.object({
   dataComplete: z.boolean(),
   completenessWarnings: z.array(z.string().min(1)),
   sources: z.array(marketSourceSchema).min(1),
+  chart: z.array(chartPointSchema).length(80),
 });
 
 export const priceQuerySchema = z.object({ mode: marketDataModeSchema });
@@ -119,6 +129,7 @@ export type MarketDataMode = z.infer<typeof marketDataModeSchema>;
 export type MarketIndicators = z.infer<typeof marketIndicatorsSchema>;
 export type MarketSnapshot = z.infer<typeof marketSnapshotSchema>;
 export type MarketSource = z.infer<typeof marketSourceSchema>;
+export type ChartPoint = z.infer<typeof chartPointSchema>;
 export type AnalyzeRequest = z.infer<typeof analyzeRequestSchema>;
 export type AnalyzeResponse = z.infer<typeof analyzeResponseSchema>;
 export type PriceQuery = z.infer<typeof priceQuerySchema>;

@@ -56,6 +56,15 @@ const sources = [
   },
 ];
 
+const chart = Array.from({ length: 80 }, (_, index) => ({
+  timestamp: new Date(Date.UTC(2026, 5, 16, index)).toISOString(),
+  close: 100000 + index,
+  ema20: 99900 + index,
+  ema50: 99800 + index,
+  ema100: 99700 + index,
+  ema200: 99600 + index,
+}));
+
 describe("market analysis contracts", () => {
   it.each(["15m", "1h", "4h", "1d"])("accepts timeframe %s", (timeframe) => {
     expect(timeframeSchema.safeParse(timeframe).success).toBe(true);
@@ -83,6 +92,7 @@ describe("market analysis contracts", () => {
         dataComplete: true,
         completenessWarnings: [],
         sources,
+        chart,
       }).success,
     ).toBe(true);
   });
@@ -98,6 +108,7 @@ describe("market analysis contracts", () => {
         dataComplete: true,
         completenessWarnings: [],
         sources,
+        chart,
       }).success,
     ).toBe(false);
   });
@@ -110,8 +121,24 @@ describe("market analysis contracts", () => {
         dataComplete: true,
         completenessWarnings: [],
         sources,
+        chart,
       }).success,
     ).toBe(false);
+  });
+
+  it("requires exactly 80 chart points", () => {
+    const response = {
+      snapshot,
+      decision,
+      dataComplete: true,
+      completenessWarnings: [],
+      sources,
+    };
+    expect(analyzeResponseSchema.safeParse(response).success).toBe(false);
+    expect(analyzeResponseSchema.safeParse({ ...response, chart: chart.slice(1) }).success).toBe(
+      false,
+    );
+    expect(analyzeResponseSchema.safeParse({ ...response, chart }).success).toBe(true);
   });
 
   it("defines price and stable API error envelopes", () => {

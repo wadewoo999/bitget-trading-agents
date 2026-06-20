@@ -1,0 +1,5 @@
+import type { Timeframe, UserStance } from "@/features/market-analysis/model";
+
+export function AnalysisControls({ timeframe, stance, loading, onTimeframe, onStance, onAnalyze }: { timeframe: Timeframe; stance: UserStance; loading: boolean; onTimeframe: (value: Timeframe) => void; onStance: (value: UserStance) => void; onAnalyze: () => void }) {
+  return <aside className="panel controls"><p className="panel-label">TIMEFRAME</p><div className="choice-grid">{(["15m", "1h", "4h", "1d"] as const).map((value) => <button className={timeframe === value ? "choice active" : "choice"} disabled={loading} key={value} onClick={() => onTimeframe(value)}>{value}</button>)}</div><p className="panel-label spaced">你的初始觀點</p><div className="choice-grid stance">{([['unsure','不確定'],['long','偏多'],['short','偏空']] as const).map(([value,label]) => <button className={stance === value ? "choice active" : "choice"} disabled={loading} key={value} onClick={() => onStance(value)}>{label}</button>)}</div><button className="analyze-button" disabled={loading} onClick={onAnalyze}>{loading ? "分析中…" : "分析市場"}</button><p className="provenance">固定使用已驗證的 Bitget 歷史快照。<br/>不代表即時市場。</p></aside>;
+}
