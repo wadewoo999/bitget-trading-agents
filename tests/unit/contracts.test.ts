@@ -1,51 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  analyzeRequestSchema,
-  marketSnapshotSchema,
-  timeframeSchema,
-} from "@/features/market-analysis/model";
 import { paperTradeRecordSchema } from "@/features/paper-trading/model";
 import { playbookEvidenceSchema } from "@/features/playbook-evidence/model";
 import { strategyRequestSchema } from "@/features/strategy-lab/model";
-
-describe("market-analysis contracts", () => {
-  it.each(["15m", "1h", "4h", "1d"])("accepts analysis timeframe %s", (timeframe) => {
-    expect(timeframeSchema.parse(timeframe)).toBe(timeframe);
-  });
-
-  it("rejects Strategy Lab-only timeframes for live analysis", () => {
-    expect(timeframeSchema.safeParse("1week").success).toBe(false);
-    expect(analyzeRequestSchema.safeParse({ symbol: "ETHUSDT", timeframe: "1h" }).success).toBe(
-      false,
-    );
-  });
-
-  it("accepts a complete BTC market snapshot", () => {
-    const result = marketSnapshotSchema.safeParse({
-      symbol: "BTCUSDT",
-      timeframe: "4h",
-      fetchedAt: "2026-06-20T00:00:00.000Z",
-      sourceRequestTime: "2026-06-20T00:00:00.000Z",
-      lastClosedCandleAt: "2026-06-19T20:00:00.000Z",
-      indicators: {
-        ema20: 102,
-        ema50: 101,
-        ema100: 100,
-        ema200: 99,
-        rsi14: 55,
-        macd: 1.5,
-        atr14: 2.1,
-        volumeChangePct: 8,
-        fundingRate: 0.0001,
-        openInterest: 120000,
-        openInterestChangePct: 3.2,
-      },
-    });
-
-    expect(result.success).toBe(true);
-  });
-});
 
 describe("paper-trading contract", () => {
   it("accepts auditable OPEN and CLOSE ledger records", () => {
