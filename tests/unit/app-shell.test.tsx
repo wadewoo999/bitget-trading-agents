@@ -21,11 +21,11 @@ describe("HomePage", () => {
 
     expect(screen.getByRole("link", { name: "Product specification" })).toHaveAttribute(
       "href",
-      "https://github.com/wadewoo999/bitget-trading-agents/blob/main/docs/PROJECT_SPEC.md",
+      "https://github.com/wadewoo999/bitget-trading-agents/blob/main/docs/product/PROJECT_SPEC.md",
     );
     expect(screen.getByRole("link", { name: "Hackathon requirements" })).toHaveAttribute(
       "href",
-      "https://github.com/wadewoo999/bitget-trading-agents/blob/main/docs/OFFICIAL_HACKATHON_REQUIREMENTS.md",
+      "https://github.com/wadewoo999/bitget-trading-agents/blob/main/docs/hackathon/OFFICIAL_HACKATHON_REQUIREMENTS.md",
     );
   });
 });

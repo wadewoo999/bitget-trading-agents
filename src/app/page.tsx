@@ -39,8 +39,8 @@ export default function HomePage() {
       </section>
 
       <footer className="document-links">
-        <a href={`${repositoryBase}/docs/PROJECT_SPEC.md`}>Product specification</a>
-        <a href={`${repositoryBase}/docs/OFFICIAL_HACKATHON_REQUIREMENTS.md`}>
+        <a href={`${repositoryBase}/docs/product/PROJECT_SPEC.md`}>Product specification</a>
+        <a href={`${repositoryBase}/docs/hackathon/OFFICIAL_HACKATHON_REQUIREMENTS.md`}>
           Hackathon requirements
         </a>
       </footer>
