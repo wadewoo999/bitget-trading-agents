@@ -29,6 +29,7 @@ npm run build
 ## Project documents
 
 - [Current Minimum Demo design](docs/development/specs/2026-06-20-minimum-demo-design.md)
+- [Current status, gaps, and next steps](docs/development/PROJECT_STATUS_AND_NEXT_STEPS.md)
 - [Long-term product specification](docs/product/PROJECT_SPEC.md)
 - [Official hackathon requirements](docs/hackathon/OFFICIAL_HACKATHON_REQUIREMENTS.md)
 - [Development specs and plans](docs/development/)
@@ -46,8 +47,10 @@ npm run build
 ## Planned implementation order
 
 1. Live Agent Hub market data
-2. Paper trading
-3. Strategy Lab and backtesting
-4. GetAgent Playbook evidence
+2. Paper trading and auditable evidence
+3. Public Vercel deployment
+4. GetAgent Playbook and public evidence
+5. Submission package
+6. Strategy Lab, backtesting, and later product expansion
 
-The MVP is simulation-first and does not execute real-money trades.
+The MVP is simulation-first and does not execute real-money trades. The Hackathon-sponsored Qwen API is a development resource for the participant, not a runtime product dependency.

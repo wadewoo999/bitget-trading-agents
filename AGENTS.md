@@ -9,14 +9,14 @@
 核心流程：
 
 ```text
-市場資料 → 技術與衍生品指標 → AI 綜合判斷 → 使用者確認 → Paper Trading
+市場資料 → 技術與衍生品指標 → 決策引擎 → 使用者確認 → Paper Trading
 ```
 
 ## MVP 邊界
 
 - 交易標的：`BTCUSDT`
 - 主要分析 timeframe：`15m`、`1h`、`4h`、`1d`
-- 核心能力：盤面分析、AI 決策、使用者確認、paper trading、Strategy Lab、回測、GetAgent Playbook 證據
+- 核心能力：盤面分析、決策建議、使用者確認、paper trading、Strategy Lab、回測、GetAgent Playbook 證據
 - Strategy profile：
   - 激進：`15m`、`1h`
   - 平衡：`4h`、`1d`
@@ -43,13 +43,14 @@
 
 - 保持模組邊界清楚，避免不必要的抽象與重構。
 - 即時資料失敗時不得以舊資料偽裝最新結果。
-- LLM 失敗時必須明確標示 fallback，不得偽裝成 AI 判斷。
-- 所有外部輸入、LLM 輸出與 API response 都需通過 schema validation。
+- Minimum Demo 使用 deterministic Decision Engine，不以 Qwen 或其他 runtime LLM 產生交易方向。
+- 所有外部輸入、決策輸出與 API response 都需通過 schema validation。
 - 不提交 secrets、私有憑證、個人帳戶資料或不可公開的交易紀錄。
 
 ## 詳細文件
 
 - 第一版目前實作依據：[`docs/development/specs/2026-06-20-minimum-demo-design.md`](docs/development/specs/2026-06-20-minimum-demo-design.md)
+- 當前完成度、缺口與下一步：[`docs/development/PROJECT_STATUS_AND_NEXT_STEPS.md`](docs/development/PROJECT_STATUS_AND_NEXT_STEPS.md)
 - 完整產品規格、資料契約、風險規則與驗收標準：[`docs/product/PROJECT_SPEC.md`](docs/product/PROJECT_SPEC.md)
 - 官方活動規則、提交要求與原始內容鏡像：[`docs/hackathon/OFFICIAL_HACKATHON_REQUIREMENTS.md`](docs/hackathon/OFFICIAL_HACKATHON_REQUIREMENTS.md)
 

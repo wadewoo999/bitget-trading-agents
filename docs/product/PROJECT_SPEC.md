@@ -23,7 +23,7 @@
 - 即時盤面分析 timeframe：`15m`、`1h`、`4h`、`1d`。
 - Agent Hub 市場資料。
 - 技術與衍生品指標計算。
-- 規則引擎與 LLM 綜合判斷。
+- Deterministic、schema-validated Decision Engine。
 - 使用者確認後建立 paper trade。
 - Paper position 手動平倉與 ledger 匯出。
 - 引導式 Strategy Lab。
@@ -48,13 +48,13 @@
 2. 系統取得 BTCUSDT market data。
 3. 系統計算技術與衍生品指標。
 4. 規則引擎產生市場狀態與風險限制。
-5. LLM 根據結構化資料產生決策。
-6. 風險規則覆蓋不安全或低信心結果。
+5. Deterministic Decision Engine 根據結構化資料產生決策。
+6. Schema 與風險規則拒絕不完整、不一致或低信心結果。
 7. UI 顯示 `LONG`、`SHORT` 或 `WAIT`、信心、理由、風險及失效條件。
 
 ### 3.2 Paper Trading
 
-1. 只有 `LONG` 或 `SHORT` 且 `mode = ai` 時可建立交易。
+1. 只有完整資料產生的 `LONG` 或 `SHORT` deterministic decision 可建立交易。
 2. 系統預填 entry、quantity、stop loss、take profit 與風險金額。
 3. 使用者確認後才開啟 position。
 4. 使用者以目前市場價格手動平倉。
@@ -64,7 +64,7 @@
 ### 3.3 Strategy Lab
 
 1. 使用者選擇 risk profile、允許的 timeframe 及補充策略想法。
-2. LLM 產生受 schema 限制的 `StrategyConfig`。
+2. 系統依 profile、allowlisted indicators 與使用者想法產生受 schema 限制的 `StrategyConfig`。
 3. 系統驗證所有條件只使用 allowlisted indicators。
 4. 系統載入歷史資料並執行 deterministic backtest。
 5. UI 顯示規則、metrics、equity curve 與 trades。
@@ -104,7 +104,7 @@ Server-side 透過 Bitget Agent Hub 的 `bitget-core` 讀取：
 - 衍生品風險：`crowded | normal | unavailable`
 - 波動風險：`high | medium | low`
 
-LLM 只能根據已驗證的 market snapshot 與 rule state 回傳：
+Decision Engine 只能根據已驗證的 market snapshot 與 rule state 回傳：
 
 ```ts
 type Timeframe = "15m" | "1h" | "4h" | "1d";
@@ -121,7 +121,7 @@ interface Decision {
   stopLoss?: number;
   takeProfit?: number;
   positionSizePct?: number;
-  mode: "ai" | "rule_fallback";
+  mode: "deterministic";
 }
 ```
 
@@ -131,7 +131,7 @@ interface Decision {
 - 必要 market data 不完整 → 停止分析。
 - 訊號嚴重衝突 → `WAIT`。
 - 單筆模擬風險上限為帳戶餘額的 1%。
-- `rule_fallback` 不得建立 paper trade。
+- Decision output 未通過 schema validation 時不得建立 paper trade。
 - 不提供或呼叫真實下單能力。
 
 ## 6. API 契約
@@ -153,7 +153,7 @@ Response 必須包含：
 - `Decision`
 - 資料來源與時間
 - 資料完整性狀態
-- 使用的 model 與 decision mode
+- Decision mode 與規則版本
 
 ### 6.2 `POST /api/backtest`
 
@@ -229,7 +229,7 @@ interface PaperTradeRecord {
 
 - 必要資料失敗：停止分析並顯示失敗來源。
 - 非必要衍生品資料失敗：標示 unavailable，不假造數值。
-- LLM timeout 或 schema invalid：顯示 `rule_fallback`。
+- Decision output schema invalid：停止分析，不產生交易建議。
 - 不在 client bundle、repository、log、error response 或匯出檔中保存 secrets。
 - 所有 API input 與 external response 必須 schema validate。
 - Public endpoint 需限制輸入範圍與請求頻率。
@@ -247,10 +247,10 @@ interface PaperTradeRecord {
 ### Integration
 
 - Agent Hub response → normalized snapshot。
-- Snapshot → rule state → LLM schema → risk override。
+- Snapshot → rule state → deterministic decision schema → risk validation。
 - Confirm → paper position → close → ledger export。
 - StrategyConfig → historical data → backtest output。
-- LLM failure → fallback 且禁止交易。
+- Decision schema failure → 停止分析且禁止交易。
 
 ### Browser / Acceptance
 
