@@ -31,7 +31,7 @@ This version does not include Strategy Lab, a runtime LLM, real-money trading, m
 
 ### Data mode
 
-- `live`: fetch current Bitget market data through the Agent Hub `bitget-core` package.
+- `live`: fetch current Bitget futures market data from server-side public endpoints.
 - `sample`: load a frozen repository fixture and display `SAMPLE DATA` persistently.
 
 Sample mode is a fallback and reproducibility tool. It must never be presented as current market data or submitted as live paper-trading evidence.
@@ -43,7 +43,7 @@ Use one Next.js deployment with two boundaries.
 ### Server
 
 - Validate API input.
-- Fetch live data through `bitget-core`, or load the selected sample fixture.
+- Fetch live data through server-side Bitget public futures endpoints, or load the selected sample fixture.
 - Normalize ticker, candles, funding, and open-interest responses.
 - Calculate indicators.
 - Produce the deterministic decision and risk warnings.

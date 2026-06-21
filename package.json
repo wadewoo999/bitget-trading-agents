@@ -7,7 +7,11 @@
     "build": "next build",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
-    "test": "vitest run"
+    "test": "vitest run",
+    "demo-check": "node scripts/demo-check.mjs",
+    "smoke": "npm run demo-check",
+    "open-visual-check": "npm run demo-check",
+    "export-live-evidence": "node scripts/export-live-evidence.mjs"
   },
   "dependencies": {
     "next": "16.2.9",

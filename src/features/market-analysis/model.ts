@@ -85,6 +85,7 @@ export const analyzeResponseSchema = z.object({
 });
 
 export const priceQuerySchema = z.object({ mode: marketDataModeSchema });
+export const MARKET_FEED_CANDLE_COUNT = 80;
 
 export const priceResponseSchema = z
   .object({
@@ -107,6 +108,51 @@ export const priceResponseSchema = z
         code: "custom",
         path: ["fixtureVersion"],
         message: "Live prices cannot declare a fixture version",
+      });
+    }
+  });
+
+export const marketFeedQuerySchema = z.object({
+  mode: marketDataModeSchema,
+  timeframe: timeframeSchema,
+});
+
+export const marketFeedCandleSchema = z
+  .object({
+    openTime: z.string().datetime(),
+    closeTime: z.string().datetime(),
+    open: z.number().positive(),
+    high: z.number().positive(),
+    low: z.number().positive(),
+    close: z.number().positive(),
+    volume: z.number().nonnegative(),
+  })
+  .strict();
+
+export const marketFeedResponseSchema = z
+  .object({
+    symbol: z.literal("BTCUSDT"),
+    mode: marketDataModeSchema,
+    timeframe: timeframeSchema,
+    price: z.number().positive(),
+    fetchedAt: z.string().datetime(),
+    fixtureVersion: z.string().min(1).nullable(),
+    completenessWarnings: z.array(z.string().min(1)),
+    candles: z.array(marketFeedCandleSchema).length(MARKET_FEED_CANDLE_COUNT),
+  })
+  .superRefine(({ fixtureVersion, mode }, context) => {
+    if (mode === "sample" && fixtureVersion === null) {
+      context.addIssue({
+        code: "custom",
+        path: ["fixtureVersion"],
+        message: "Sample market-feed requires a fixture version",
+      });
+    }
+    if (mode === "live" && fixtureVersion !== null) {
+      context.addIssue({
+        code: "custom",
+        path: ["fixtureVersion"],
+        message: "Live market-feed cannot declare a fixture version",
       });
     }
   });
@@ -134,5 +180,8 @@ export type AnalyzeRequest = z.infer<typeof analyzeRequestSchema>;
 export type AnalyzeResponse = z.infer<typeof analyzeResponseSchema>;
 export type PriceQuery = z.infer<typeof priceQuerySchema>;
 export type PriceResponse = z.infer<typeof priceResponseSchema>;
+export type MarketFeedQuery = z.infer<typeof marketFeedQuerySchema>;
+export type MarketFeedCandle = z.infer<typeof marketFeedCandleSchema>;
+export type MarketFeedResponse = z.infer<typeof marketFeedResponseSchema>;
 export type ApiErrorCode = z.infer<typeof apiErrorCodeSchema>;
 export type ApiError = z.infer<typeof apiErrorSchema>;
