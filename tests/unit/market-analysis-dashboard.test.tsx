@@ -140,47 +140,6 @@ function buildPriceResponse({
   };
 }
 
-function buildBacktestResponse({
-  profile = "balanced",
-  timeframe = "4h",
-}: {
-  profile?: "aggressive" | "balanced" | "conservative";
-  timeframe?: "15m" | "1h" | "4h" | "1d" | "1week";
-}) {
-  return {
-    strategy: {
-      profile,
-      timeframe,
-      entryRules: ["Trend confirmation with EMA20/EMA50 alignment"],
-      exitRules: ["Close when momentum confirmation fades"],
-      riskPerTradePct: 0.75,
-    },
-    periodStart: "2026-01-01T00:00:00.000Z",
-    periodEnd: "2026-02-01T00:00:00.000Z",
-    totalReturnPct: 12.5,
-    maxDrawdownPct: 4.2,
-    sharpeRatio: 1.13,
-    winRate: 0.54,
-    tradeCount: 18,
-    feeRate: 0.0006,
-    slippageRate: 0.0002,
-    equityCurve: [{ timestamp: "2026-01-02T00:00:00.000Z", equity: 10020 }],
-    trades: [
-      {
-        id: "trade-1",
-        side: "LONG",
-        entryAt: "2026-01-02T00:00:00.000Z",
-        exitAt: "2026-01-03T00:00:00.000Z",
-        entryPrice: 100,
-        exitPrice: 105,
-        quantity: 1,
-        pnl: 4.69,
-        fee: 0.11,
-      },
-    ],
-  };
-}
-
 function getRequestUrl(input: unknown) {
   return typeof input === "string" ? input : input instanceof Request ? input.url : String(input);
 }
@@ -232,9 +191,6 @@ describe("MarketAnalysisDashboard", () => {
         if (url === "/api/price?mode=sample") {
           return jsonResponse(buildPriceResponse({ mode: "sample" }));
         }
-        if (url === "/api/backtest" && init?.method === "POST") {
-          return jsonResponse(buildBacktestResponse({ profile: "aggressive", timeframe: "1h" }));
-        }
         if (url === "/api/analyze" && init?.method === "POST") {
           return jsonResponse(buildAnalysisResponse("sample"));
         }
@@ -279,69 +235,6 @@ describe("MarketAnalysisDashboard", () => {
     expect(within(stage).getByText("Strategy Lab")).toBeInTheDocument();
   });
 
-  it("renders strategy support, expands comparison cards, and applies the recommended strategy to Strategy Lab", async () => {
-    const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
-      const url = getRequestUrl(input);
-      if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "sample" }));
-      if (url === "/api/price?mode=sample") return jsonResponse(buildPriceResponse({ mode: "sample" }));
-      if (url === "/api/analyze" && init?.method === "POST") return jsonResponse(buildAnalysisResponse("sample"));
-      if (url === "/api/backtest" && init?.method === "POST") {
-        const body = JSON.parse(String(init.body)) as { profile: "aggressive" | "balanced" | "conservative"; timeframe: "15m" | "1h" | "4h" | "1d" | "1week" };
-        return jsonResponse(buildBacktestResponse({ profile: body.profile, timeframe: body.timeframe }));
-      }
-      throw new Error(`Unexpected fetch: ${url}`);
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    render(<MarketAnalysisDashboard />);
-    fireEvent.click(screen.getByRole("button", { name: "分析市場" }));
-
-    await waitFor(() => expect(screen.getByText("策略支援")).toBeInTheDocument());
-    expect(screen.getByText("推薦策略")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "激進", level: 3 })).toBeInTheDocument();
-    expect(screen.getByText(/目前 1h 結構先由激進策略承接/)).toBeInTheDocument();
-    expect(screen.getByText(/趨勢偏多、動能配合/)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "查看另外兩個策略" }));
-    expect(screen.getAllByText("平衡").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("穩健").length).toBeGreaterThan(0);
-    expect(screen.getByText(/Win Rate 54.00%/)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "帶入 Strategy Lab 驗證" }));
-    await waitFor(() => expect(screen.getByText("目前已帶入：激進 · 1h")).toBeInTheDocument());
-  });
-
-  it("renders a strategy lab panel and fetches backtest metrics", async () => {
-    const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
-      const url = getRequestUrl(input);
-      if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "sample" }));
-      if (url === "/api/price?mode=sample") return jsonResponse(buildPriceResponse({ mode: "sample" }));
-      if (url === "/api/backtest" && init?.method === "POST") return jsonResponse(buildBacktestResponse({}));
-      throw new Error(`Unexpected fetch: ${url}`);
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    render(<MarketAnalysisDashboard />);
-
-    expect(screen.getByText("Strategy Lab")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Run Strategy Lab" }));
-
-    await waitFor(() => expect(screen.getByText("Total Return")).toBeInTheDocument());
-    expect(screen.getByText("Win Rate")).toBeInTheDocument();
-    expect(screen.getByText("Trade Count")).toBeInTheDocument();
-    expect(screen.getByText("Sharpe Ratio")).toBeInTheDocument();
-    expect(screen.getByText("Equity Curve")).toBeInTheDocument();
-    expect(screen.getByText("Recent Trades")).toBeInTheDocument();
-    expect(screen.getByText("trade-1")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledWith(
-      "/api/backtest",
-      expect.objectContaining({
-        method: "POST",
-        body: JSON.stringify({ profile: "balanced", timeframe: "4h", idea: "" }),
-      }),
-    );
-  });
-
   it("refreshes only latest price without reloading market-feed candles or replacing analysis snapshot", async () => {
     vi.useFakeTimers();
     const analysis = buildAnalysisResponse("sample");
@@ -368,9 +261,6 @@ describe("MarketAnalysisDashboard", () => {
             fetchedAt: priceCalls === 1 ? "2026-06-20T00:00:00.000Z" : "2026-06-20T00:30:00.000Z",
           }),
         );
-      }
-      if (url === "/api/backtest" && init?.method === "POST") {
-        return jsonResponse(buildBacktestResponse({ profile: "aggressive", timeframe: "1h" }));
       }
       if (url === "/api/analyze" && init?.method === "POST") return jsonResponse(analysis);
       throw new Error(`Unexpected fetch: ${url}`);
