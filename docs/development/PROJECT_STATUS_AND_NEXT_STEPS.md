@@ -1,7 +1,7 @@
 # 專案現況評估與下一步
 
-> 評估日期：2026-06-21
-> 評估基準：`main` commit `405f481` 及當日 repository 驗證結果
+> 評估日期：2026-06-22
+> 評估基準：當前 repository 功能狀態與驗證結果
 > 本文件是時間點快照；功能完成度變更後必須同步更新。
 
 ## 1. 結論
@@ -59,8 +59,9 @@ bitget-trading-agents/
 - Live mode 會移除未收盤 candle，驗證 chronological、unique 與至少 250 根 closed candles。
 - funding rate 與 open interest 缺失時明確標記 unavailable，不以 fixture 或舊值補齊。
 - 市場頁已分離 analysis snapshot 與 market feed。
-- 最新價格與 K 線圖可每 30 秒刷新。
+- 每 30 秒刷新目前只更新 latest price；K 線圖與 market context 維持分析當下的 snapshot。
 - 刷新市場觀測資料時，不會自動改寫既有 decision。
+- market feed 現已顯示 Funding / OI。
 
 ### 3.2 可重現資料
 
@@ -93,33 +94,33 @@ Strategy Lab 與 Playbook 目前只有 contract，不能視為功能已完成。
 
 ### 3.5 驗證證據
 
-2026-06-21 執行結果：
+2026-06-22 驗證結果：
 
 | 驗證 | 結果 |
 |---|---|
 | `npm run lint` | 通過 |
 | `npm run typecheck` | 通過 |
-| `npm test` | 22 files、97 tests 全部通過 |
+| `npm test` | 22 files、98 tests 全部通過 |
 | `npm run build` | Next.js production build 通過 |
 | Production `/api/analyze` | sample / live mode 均成功回應 |
 | `npm run demo-check` | 通過，且維持為唯一標準一鍵驗證入口 |
 | GitHub repository | Public |
 | Git working tree | 持續開發中，非乾淨狀態 |
 
-內建瀏覽器控制在當日受到執行環境 metadata 問題阻擋，因此 mobile layout、browser console 與真實 E2E 視覺驗收仍需補做。
+文件同步後仍建議保留 desktop browser smoke test、desktop visual QA 與 browser console checks，作為主線合併前的人工確認。
 
 ## 4. 尚未完成內容
 
 | 項目 | 目前狀態 | 優先級 |
 |---|---|---:|
-| 可核查 paper trading evidence | 已有一鍵匯出腳本，尚未提交首份產物 | P0 |
-| Public Vercel Demo | 未部署 | P0 |
-| GetAgent Playbook | 未建立 | P1 |
+| Strategy Lab UI | 僅有 contract | P0 |
+| Deterministic backtest engine | 未實作 | P0 |
+| 可核查 paper trading evidence | 已有一鍵匯出腳本，尚未提交首份產物 | P1 |
+| GetAgent Playbook | 已有草稿 package，主流程暫緩到交付前階段 | P1 |
 | Playbook sandbox backtest 與公開 evidence | 未建立 | P1 |
-| Submission README／影片／表單材料 | 未完成 | P1 |
-| Strategy Lab UI | 僅有 contract | P2 |
-| Deterministic backtest engine | 未實作 | P2 |
-| Browser E2E／mobile QA | 未完成 | P2 |
+| Public Vercel Demo | 未部署 | P2 |
+| Submission README／影片／表單材料 | 未完成 | P2 |
+| Desktop browser smoke test／desktop visual QA／browser console checks | 持續作為主線合併前人工確認項目 | P2 |
 | GitHub Actions CI | 未建立 | P3 |
 
 ## 5. Hackathon 提交缺口
@@ -162,43 +163,41 @@ Sample 分析輸出不能當成 Live paper-trading evidence。
 - Minimum Demo 使用 deterministic、schema-validated Decision Engine，不呼叫 runtime Qwen／LLM。
 - Agent Hub 提供 Live market data；系統根據已驗證資料產生決策。
 - 使用者確認後才建立 paper trade；產品不執行真實資金交易。
-- GetAgent Playbook 是 Hackathon delivery 與策略 evidence 的一部分。
+- GetAgent Playbook 是 Hackathon delivery 與策略 evidence 的一部分，但不放在目前產品本體補全之前。
 - 多幣種、新聞、鏈上與宏觀資料仍是後續產品範圍，不是取消項目。
 
 ## 8. 下一步
 
-### Stage 1：Minimum Demo 補全與穩定化
+### Stage 1：Minimum Demo 補全與穩定化（已完成）
 
-1. 補強 Dashboard 視覺完成度、live 狀態提示與 evidence 頁可讀性。
-2. 補齊 desktop / mobile / console smoke test。
-3. 檢查並修正 market feed、paper trading、ledger、restore 與匯出流程中的體驗斷點。
-4. 讓目前 Demo 達到穩定、可重跑、可展示，但仍不以對外公開為目標。
+已完成重點：
 
-Stage 1 收尾完成標準：
-
-- Dashboard 已能清楚區分分析快照與市場即時觀測。
-- market feed 刷新有可見狀態與價格變化提示，且不覆寫分析結論。
+- Dashboard 已能清楚區分 analysis snapshot 與 market feed。
+- 30 秒刷新目前只更新 latest price，不覆寫既有 decision；K 線圖與 market context 維持 snapshot-based。
+- market feed 已顯示 Funding / OI。
 - funding / OI 缺失時，資料完整性與風險提醒分開顯示。
-- paper trading preview、open position、ledger、evidence 頁都具備可讀性。
+- paper trading preview、open position、ledger、evidence 頁已達可展示狀態。
 - `demo-check` 持續可用，作為唯一標準重跑驗證流程。
 
-### Stage 2：GetAgent Playbook
+### Stage 2：產品本體補全（目前主動進行階段）
+
+本階段先把「產品完成度」拉到可以穩定展示與驗證的水準，不先處理公開部署：
+
+1. 完成 Strategy Lab UI。
+2. 完成 deterministic backtest engine 與 `/api/backtest`。
+3. 把回測結果接回 Dashboard / Strategy Lab 畫面，能展示規則、metrics、equity curve 與 trades。
+4. 補強目前 evidence / dashboard 的可讀性與一致性，但不新增交付導向的外部整合。
+5. 保持分析主流程、paper trading 與一鍵驗證入口可持續通過。
+
+### Stage 3：交付證據補全
+
+當產品本體補全後，再處理：
 
 1. 建立與產品決策邏輯一致的 BTC strategy Playbook。
 2. 完成 validation、upload、sandbox backtest、confirm 與 publish。
 3. 保存公開 URL、metrics、equity curve 與驗證時間。
-4. 不偽造 backtest 或 execution evidence。
-
-### Stage 3：Strategy Lab 與產品擴充
-
-完成前兩段後，再依序加入：
-
-- Strategy Lab 與 deterministic backtest。
-- `1week` Strategy timeframe。
-- 多幣種。
-- 新聞資料。
-- 鏈上資料。
-- 宏觀資料。
+4. 產出可核查的 live paper trading evidence 鏈。
+5. 不偽造 backtest 或 execution evidence。
 
 ### Stage 4：公開部署與提交材料
 
@@ -216,8 +215,8 @@ Stage 1 收尾完成標準：
 
 ```text
 Minimum Demo completion and stabilization
-→ GetAgent Playbook and evidence
-→ Strategy Lab and later product expansion
+→ Product completion (Strategy Lab / deterministic backtest / UX polish)
+→ Delivery evidence (Playbook / live evidence chain)
 → Public deployment and submission package
 ```
 

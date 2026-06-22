@@ -137,6 +137,8 @@ export const marketFeedResponseSchema = z
     price: z.number().positive(),
     fetchedAt: z.string().datetime(),
     fixtureVersion: z.string().min(1).nullable(),
+    fundingRate: z.number().nullable(),
+    openInterest: z.number().nullable(),
     completenessWarnings: z.array(z.string().min(1)),
     candles: z.array(marketFeedCandleSchema).length(MARKET_FEED_CANDLE_COUNT),
   })

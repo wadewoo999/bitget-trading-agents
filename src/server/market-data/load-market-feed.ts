@@ -39,6 +39,8 @@ export async function loadMarketFeed({
     price: marketData.latestPrice,
     fetchedAt: marketData.fetchedAt,
     fixtureVersion: marketData.fixtureVersion,
+    fundingRate: marketData.fundingRate,
+    openInterest: marketData.openInterest,
     completenessWarnings: buildMarketCompletenessWarnings({
       mode,
       fundingRate: marketData.fundingRate,

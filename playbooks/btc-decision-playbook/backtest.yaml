@@ -1,0 +1,47 @@
+venue:
+  name: BINANCE
+  account_type: MARGIN
+  oms_type: HEDGING
+  starting_balances:
+    - amount: 10000
+      currency: USDT
+
+instrument:
+  id: BTCUSDT.BINANCE
+  kind: perpetual
+  raw_symbol: BTCUSDT
+  base_currency: BTC
+  quote_currency: USDT
+  settlement_currency: USDT
+  price_precision: 2
+  size_precision: 6
+  price_increment: "0.01"
+  size_increment: "0.000001"
+  maker_fee: "0.0002"
+  taker_fee: "0.0005"
+  bar_type: BTCUSDT.BINANCE-4-HOUR-LAST-EXTERNAL
+
+strategy:
+  module: strategy
+  class: BtcDecisionStrategy
+  config_class: BtcDecisionStrategyConfig
+  config:
+    leverage: 3
+    margin_budget: "50"
+
+execution:
+  start: "2025-01-01T00:00:00Z"
+  end: "2025-05-31T20:00:00Z"
+
+data_requirements:
+  required_bar_fields:
+    - ema20
+    - ema50
+    - ema100
+    - ema200
+    - rsi14
+    - macd_histogram
+    - volume_change_pct
+    - price_return_20_pct
+    - volatility_high
+    - warmup_ready

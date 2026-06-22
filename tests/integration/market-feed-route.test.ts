@@ -37,6 +37,8 @@ describe("GET /api/market-feed", () => {
       price: 100000,
       fetchedAt: "2026-06-21T00:00:00.000Z",
       fixtureVersion: "fixture-2026-06-20",
+      fundingRate: 0.0001,
+      openInterest: 12345,
       completenessWarnings: ["Sample data is a frozen snapshot and not live market data."],
       candles: createCandles(80),
     });
@@ -64,6 +66,8 @@ describe("GET /api/market-feed", () => {
       price: 101234,
       fetchedAt: "2026-06-21T01:00:00.000Z",
       fixtureVersion: null,
+      fundingRate: null,
+      openInterest: null,
       completenessWarnings: [
         "Funding rate unavailable; crowding signal is neutral.",
         "Open interest unavailable; market context is partial.",
@@ -92,6 +96,8 @@ describe("GET /api/market-feed", () => {
         price: 100000,
         fetchedAt: "2026-06-21T00:00:00.000Z",
         fixtureVersion: "fixture-2026-06-20",
+        fundingRate: 0.0001,
+        openInterest: 12345,
         completenessWarnings: ["Sample data is a frozen snapshot and not live market data."],
         candles: createCandles(1),
       }),

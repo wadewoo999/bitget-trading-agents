@@ -1,0 +1,50 @@
+name: btc-decision-playbook
+display_name: "BTC Decision Playbook"
+version: "0.0.0-draft"
+description: "Deterministic BTCUSDT decision Playbook for 4h trend, momentum, and participation signals."
+long_description: |
+  This Playbook is designed for BTCUSDT contract traders who want a repeatable signal that captures directional market structure without relying on discretionary judgement. Its thesis is simple: when trend alignment, momentum quality, and participation all point in the same direction, the market is more likely to continue than to collapse into noise. The strategy aims to participate in clearer directional phases while standing aside when the structure is mixed or unstable. It is built to be explainable first, so every signal comes from a bounded ruleset rather than from a model that changes its reasoning from one run to the next.
+
+  The strategy enters long when upward trend structure, supportive momentum, and confirming participation line up at the same time. It enters short when those same categories align on the downside. It does not chase every move, and it does not assume that motion alone is enough. A move must show both direction and support before the Playbook opens a position. When the evidence is incomplete, contradictory, or too weak to justify risk, it chooses to hold rather than force activity. That waiting behavior is part of the design, not a failure mode.
+
+  Exit logic is based on structural invalidation instead of prediction. When the direction loses alignment, when momentum no longer supports the active position, or when the market drifts back into an indecisive state, the Playbook closes and resets. It is meant to stay involved only while the original idea still makes sense. The stop behavior is therefore defensive: once the conditions that justified the position are no longer present, the strategy steps out and reassesses instead of arguing with the market.
+
+  Subscribers can tune leverage and margin budget. Higher leverage increases both upside and drawdown without making the entry logic more selective. Margin budget sets the capital denominator used for sizing and for interpreting strategy-level return, so raising it gives the Playbook more room to express the same signals while also increasing capital at risk. The symbol list is intentionally constrained so subscribers cannot accidentally turn this focused BTC strategy into a different product.
+
+  The main risks are choppy range conditions, fast reversals, and noisy phases where momentum flickers without real follow-through. In those environments the Playbook can underperform, accumulate false starts, or spend long stretches waiting. Historical backtest strength does not guarantee future profitability, and subscribers should expect losses when the market stops rewarding directional structure.
+market_type: contract
+trading_symbols: ["BTCUSDT"]
+tags: ["btc", "deterministic", "trend-following", "signal-only", "contract"]
+schedule:
+  cron: "0 */4 * * *"
+  tz: "Asia/Taipei"
+decision_mode: deterministic
+backtest_support: full
+runtime_profile: deterministic
+execution_mode: signal_only
+follow_trade_supported: false
+strategy_config:
+  trading_symbols: ["BTCUSDT"]
+  timeframe: "4h"
+  leverage: 3
+  margin_budget: "50"
+user_config_schema:
+  trading_symbols:
+    type: array
+    item_type: string
+    default: ["BTCUSDT"]
+    options: ["BTCUSDT"]
+    min_items: 1
+    max_items: 1
+    label: "Trading symbol"
+  leverage:
+    type: integer
+    default: 3
+    min: 1
+    max: 10
+    label: "Leverage"
+  margin_budget:
+    type: string
+    default: "50"
+    pattern: "^[0-9]+(\\.[0-9]+)?$"
+    label: "Margin budget USDT"

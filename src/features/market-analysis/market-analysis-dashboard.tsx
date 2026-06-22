@@ -20,6 +20,7 @@ import {
   type AnalyzeResponse,
   type MarketDataMode,
   type MarketFeedResponse,
+  type PriceResponse,
   type Timeframe,
   type UserStance,
 } from "@/features/market-analysis/model";
@@ -48,6 +49,10 @@ function restoreInitialResetNotice(): string | null {
     : null;
 }
 
+function formatMarketContextValue(label: string, value: number | null, formatter: (input: number) => string) {
+  return value === null ? `${label} 不可用` : `${label} ${formatter(value)}`;
+}
+
 export function MarketAnalysisDashboard() {
   const router = useRouter();
   const [timeframe, setTimeframe] = useState<Timeframe>("1h");
@@ -58,12 +63,15 @@ export function MarketAnalysisDashboard() {
   const [marketFeed, setMarketFeed] = useState<MarketFeedResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [marketFeedError, setMarketFeedError] = useState<string | null>(null);
+  const [priceData, setPriceData] = useState<PriceResponse | null>(null);
+  const [priceError, setPriceError] = useState<string | null>(null);
   const [marketFeedStatus, setMarketFeedStatus] = useState<"idle" | "refreshing" | "updated">("idle");
   const [marketFeedPriceDirection, setMarketFeedPriceDirection] = useState<"first" | "up" | "down" | "flat">("first");
   const [account, setAccount] = useState<PaperAccount>(restoreInitialAccount);
   const [preview, setPreview] = useState<TradePreview | null>(null);
   const [resetNotice] = useState<string | null>(restoreInitialResetNotice);
   const marketFeedRequestSequenceRef = useRef(0);
+  const priceRequestSequenceRef = useRef(0);
   const previousMarketFeedPriceRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -73,12 +81,10 @@ export function MarketAnalysisDashboard() {
 
   useEffect(() => {
     let disposed = false;
-    let timeoutId: number | null = null;
     const controller = new AbortController();
 
-    async function refreshMarketFeed() {
+    async function loadMarketFeed() {
       const requestSequence = ++marketFeedRequestSequenceRef.current;
-      setMarketFeedStatus("refreshing");
 
       try {
         const response = await fetch(`/api/market-feed?mode=${mode}&timeframe=${timeframe}`, {
@@ -89,6 +95,43 @@ export function MarketAnalysisDashboard() {
         const parsed = marketFeedResponseSchema.safeParse(json);
         if (!parsed.success) throw new Error("市場資料格式無效。");
         if (disposed || requestSequence !== marketFeedRequestSequenceRef.current) return;
+        setMarketFeed(parsed.data);
+        setMarketFeedError(null);
+      } catch (reason) {
+        if (controller.signal.aborted || disposed || requestSequence !== marketFeedRequestSequenceRef.current) return;
+        setMarketFeedError(reason instanceof Error ? reason.message : "最新市場資料暫時無法更新。");
+      }
+    }
+
+    setMarketFeed(null);
+    setMarketFeedError(null);
+    void loadMarketFeed();
+
+    return () => {
+      disposed = true;
+      marketFeedRequestSequenceRef.current += 1;
+      controller.abort();
+    };
+  }, [mode, timeframe]);
+
+  useEffect(() => {
+    let disposed = false;
+    let timeoutId: number | null = null;
+    const controller = new AbortController();
+
+    async function refreshLatestPrice() {
+      const requestSequence = ++priceRequestSequenceRef.current;
+      setMarketFeedStatus("refreshing");
+
+      try {
+        const response = await fetch(`/api/price?mode=${mode}`, {
+          signal: controller.signal,
+        });
+        const json: unknown = await response.json();
+        if (!response.ok) throw new Error("最新市場資料暫時無法更新。");
+        const parsed = priceResponseSchema.safeParse(json);
+        if (!parsed.success) throw new Error("價格資料格式無效。");
+        if (disposed || requestSequence !== priceRequestSequenceRef.current) return;
         const previousPrice = previousMarketFeedPriceRef.current;
         setMarketFeedPriceDirection(
           previousPrice === null
@@ -100,25 +143,30 @@ export function MarketAnalysisDashboard() {
                 : "flat",
         );
         previousMarketFeedPriceRef.current = parsed.data.price;
-        setMarketFeed(parsed.data);
-        setMarketFeedError(null);
+        setPriceData(parsed.data);
+        setPriceError(null);
         setMarketFeedStatus("updated");
       } catch (reason) {
-        if (controller.signal.aborted || disposed || requestSequence !== marketFeedRequestSequenceRef.current) return;
-        setMarketFeedError(reason instanceof Error ? reason.message : "最新市場資料暫時無法更新。");
+        if (controller.signal.aborted || disposed || requestSequence !== priceRequestSequenceRef.current) return;
+        setPriceError(reason instanceof Error ? reason.message : "最新市場資料暫時無法更新。");
       } finally {
-        if (disposed || controller.signal.aborted || requestSequence !== marketFeedRequestSequenceRef.current) return;
+        if (disposed || controller.signal.aborted || requestSequence !== priceRequestSequenceRef.current) return;
         timeoutId = window.setTimeout(() => {
-          void refreshMarketFeed();
+          void refreshLatestPrice();
         }, 30000);
       }
     }
 
-    void refreshMarketFeed();
+    previousMarketFeedPriceRef.current = null;
+    setPriceData(null);
+    setPriceError(null);
+    setMarketFeedStatus("idle");
+    setMarketFeedPriceDirection("first");
+    void refreshLatestPrice();
 
     return () => {
       disposed = true;
-      marketFeedRequestSequenceRef.current += 1;
+      priceRequestSequenceRef.current += 1;
       controller.abort();
       if (timeoutId !== null) window.clearTimeout(timeoutId);
     };
@@ -230,9 +278,13 @@ export function MarketAnalysisDashboard() {
   const currentMarketFeed = marketFeed?.mode === mode && marketFeed?.timeframe === timeframe ? marketFeed : null;
   const activeMode = analysisData?.snapshot.mode ?? currentMarketFeed?.mode ?? mode;
   const canGenerateEvidenceReport = hasMatchingEvidenceLedger(analysisData, account);
+  const currentPriceData = priceData?.mode === mode ? priceData : null;
+  const displayPrice = currentPriceData?.price ?? currentMarketFeed?.price ?? null;
+  const displayFetchedAt = currentPriceData?.fetchedAt ?? currentMarketFeed?.fetchedAt ?? null;
+  const marketObservationError = marketFeedError ?? priceError;
   const sampleFeedHint =
     mode === "sample"
-      ? "此模式每 30 秒重新抓取一次，但內容為固定快照，價格與 K 線不會隨市場變動。"
+      ? "此模式每 30 秒只刷新價格；K 線與上下文仍來自固定快照。"
       : null;
   const marketFeedPriceDirectionLabel =
     marketFeedPriceDirection === "first"
@@ -295,19 +347,23 @@ export function MarketAnalysisDashboard() {
                   {marketFeedStatus === "refreshing" ? "更新中…" : marketFeedStatus === "updated" ? "剛剛更新" : "等待首次更新"}
                 </span>
               </div>
-              <p className="panel-summary">此區塊每 30 秒刷新，但不會改寫分析快照。</p>
-              {currentMarketFeed && (
+              <p className="panel-summary">此區塊每 30 秒只刷新最新價格；K 線與市場上下文不會自動改寫。</p>
+              {currentMarketFeed && displayPrice !== null && displayFetchedAt && (
                 <>
                   <MarketChart
                     timeframe={currentMarketFeed.timeframe}
-                    price={currentMarketFeed.price}
-                    fetchedAt={currentMarketFeed.fetchedAt}
+                    price={displayPrice}
+                    fetchedAt={displayFetchedAt}
                     candles={currentMarketFeed.candles}
                   />
                   <div className="market-feed-meta">
-                    <span>上次更新：{new Date(currentMarketFeed.fetchedAt).toLocaleTimeString("zh-TW", { hour12: false })}</span>
+                    <span>上次更新：{new Date(displayFetchedAt).toLocaleTimeString("zh-TW", { hour12: false })}</span>
                     <span>模式：{currentMarketFeed.mode.toUpperCase()}</span>
                     <span>級別：{currentMarketFeed.timeframe}</span>
+                    <span>
+                      {formatMarketContextValue("Funding", currentMarketFeed.fundingRate, (value) => `${(value * 100).toFixed(4)}%`)}
+                    </span>
+                    <span>{formatMarketContextValue("OI", currentMarketFeed.openInterest, (value) => value.toFixed(0))}</span>
                     <span className={`price-delta ${marketFeedPriceDirection}`}>{marketFeedPriceDirectionLabel}</span>
                   </div>
                   {currentMarketFeed.completenessWarnings.length > 0 && (
@@ -321,9 +377,9 @@ export function MarketAnalysisDashboard() {
                 </>
               )}
 
-              {marketFeedError && (
+              {marketObservationError && (
                 <div className="market-feed-error" role="alert">
-                  {marketFeedError}
+                  {marketObservationError}
                 </div>
               )}
             </section>

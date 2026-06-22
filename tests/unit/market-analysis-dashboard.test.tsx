@@ -96,12 +96,16 @@ function buildMarketFeedResponse({
   timeframe = "1h",
   price = 100000,
   fetchedAt = "2026-06-20T00:00:00.000Z",
+  fundingRate = 0,
+  openInterest = 1000,
   completenessWarnings = [],
 }: {
   mode?: "sample" | "live";
   timeframe?: "15m" | "1h" | "4h" | "1d";
   price?: number;
   fetchedAt?: string;
+  fundingRate?: number | null;
+  openInterest?: number | null;
   completenessWarnings?: string[];
 }) {
   return {
@@ -111,8 +115,28 @@ function buildMarketFeedResponse({
     price,
     fetchedAt,
     fixtureVersion: mode === "sample" ? "btc-1h-v1" : null,
+    fundingRate,
+    openInterest,
     completenessWarnings,
     candles: buildCandles(price),
+  };
+}
+
+function buildPriceResponse({
+  mode = "sample",
+  price = 100000,
+  fetchedAt = "2026-06-20T00:00:00.000Z",
+}: {
+  mode?: "sample" | "live";
+  price?: number;
+  fetchedAt?: string;
+}) {
+  return {
+    symbol: "BTCUSDT",
+    mode,
+    price,
+    fetchedAt,
+    fixtureVersion: mode === "sample" ? "btc-1h-v1" : null,
   };
 }
 
@@ -135,6 +159,8 @@ describe("MarketAnalysisDashboard", () => {
       const url = getRequestUrl(input);
       if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "sample" }));
       if (url.includes("/api/market-feed?mode=live&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "live" }));
+      if (url === "/api/price?mode=sample") return jsonResponse(buildPriceResponse({ mode: "sample" }));
+      if (url === "/api/price?mode=live") return jsonResponse(buildPriceResponse({ mode: "live" }));
       if (url === "/api/analyze" && init?.method === "POST") return jsonResponse(response);
       throw new Error(`Unexpected fetch: ${url}`);
     });
@@ -146,8 +172,8 @@ describe("MarketAnalysisDashboard", () => {
     fireEvent.click(screen.getByRole("button", { name: "分析市場" }));
     await waitFor(() => expect(screen.getByText("LONG")).toBeInTheDocument());
     expect(screen.getByText("75 / 100")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledTimes(3);
-    expect(fetchMock.mock.calls[2]?.[1]).toMatchObject({
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+    expect(fetchMock.mock.calls.at(-1)?.[1]).toMatchObject({
       method: "POST",
       body: JSON.stringify({ symbol: "BTCUSDT", timeframe: "1h", stance: "long", mode: "live" }),
     });
@@ -160,6 +186,9 @@ describe("MarketAnalysisDashboard", () => {
         const url = getRequestUrl(input);
         if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) {
           return jsonResponse(buildMarketFeedResponse({ mode: "sample" }));
+        }
+        if (url === "/api/price?mode=sample") {
+          return jsonResponse(buildPriceResponse({ mode: "sample" }));
         }
         if (url === "/api/analyze" && init?.method === "POST") {
           return jsonResponse(buildAnalysisResponse("sample"));
@@ -176,10 +205,11 @@ describe("MarketAnalysisDashboard", () => {
     expect(screen.getByText("市場即時觀測")).toBeInTheDocument();
   });
 
-  it("refreshes market feed without replacing analysis snapshot", async () => {
+  it("refreshes only latest price without reloading market-feed candles or replacing analysis snapshot", async () => {
     vi.useFakeTimers();
     const analysis = buildAnalysisResponse("sample");
     let marketFeedCalls = 0;
+    let priceCalls = 0;
     const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
       const url = getRequestUrl(input);
       if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) {
@@ -189,6 +219,16 @@ describe("MarketAnalysisDashboard", () => {
             mode: "sample",
             price: marketFeedCalls === 1 ? 100000 : 100123,
             fetchedAt: marketFeedCalls === 1 ? "2026-06-20T00:00:00.000Z" : "2026-06-20T00:30:00.000Z",
+          }),
+        );
+      }
+      if (url === "/api/price?mode=sample") {
+        priceCalls += 1;
+        return jsonResponse(
+          buildPriceResponse({
+            mode: "sample",
+            price: priceCalls === 1 ? 100000 : 100123,
+            fetchedAt: priceCalls === 1 ? "2026-06-20T00:00:00.000Z" : "2026-06-20T00:30:00.000Z",
           }),
         );
       }
@@ -213,7 +253,9 @@ describe("MarketAnalysisDashboard", () => {
       await vi.advanceTimersByTimeAsync(30000);
     });
 
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(marketFeedCalls).toBe(1);
+    expect(priceCalls).toBe(2);
     expect(screen.getByText("100123.00")).toBeInTheDocument();
     expect(screen.getByText("市場結構綜合偏多。")).toBeInTheDocument();
     expect(screen.getByText("剛剛更新")).toBeInTheDocument();
@@ -228,6 +270,8 @@ describe("MarketAnalysisDashboard", () => {
       vi.fn((input: unknown) => {
         const url = getRequestUrl(input);
         if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) return firstFeed.promise;
+        if (url === "/api/price?mode=sample")
+          return Promise.resolve(jsonResponse(buildPriceResponse({ mode: "sample", fetchedAt: "2026-06-20T08:00:00.000Z" })));
         throw new Error(`Unexpected fetch: ${url}`);
       }),
     );
@@ -252,25 +296,31 @@ describe("MarketAnalysisDashboard", () => {
 
     expect(screen.getByText("剛剛更新")).toBeInTheDocument();
     expect(screen.getByText((text) => text.startsWith("上次更新："))).toBeInTheDocument();
-    expect(
-      screen.getByText("此模式每 30 秒重新抓取一次，但內容為固定快照，價格與 K 線不會隨市場變動。"),
-    ).toBeInTheDocument();
+    expect(screen.getByText("此模式每 30 秒只刷新價格；K 線與上下文仍來自固定快照。")).toBeInTheDocument();
   });
 
-  it("shows price direction feedback when the market feed price changes", async () => {
+  it("shows price direction feedback when the polled latest price changes", async () => {
     vi.useFakeTimers();
-    let marketFeedCalls = 0;
+    let priceCalls = 0;
     vi.stubGlobal(
       "fetch",
       vi.fn(async (input: unknown) => {
         const url = getRequestUrl(input);
-        if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) {
-          marketFeedCalls += 1;
+        if (url.includes("/api/market-feed?mode=sample&timeframe=1h"))
           return jsonResponse(
             buildMarketFeedResponse({
               mode: "sample",
-              price: marketFeedCalls === 1 ? 100000 : 100123,
-              fetchedAt: marketFeedCalls === 1 ? "2026-06-20T00:00:00.000Z" : "2026-06-20T00:30:00.000Z",
+              price: 100000,
+              fetchedAt: "2026-06-20T00:00:00.000Z",
+            }),
+          );
+        if (url === "/api/price?mode=sample") {
+          priceCalls += 1;
+          return jsonResponse(
+            buildPriceResponse({
+              mode: "sample",
+              price: priceCalls === 1 ? 100000 : 100123,
+              fetchedAt: priceCalls === 1 ? "2026-06-20T00:00:00.000Z" : "2026-06-20T00:30:00.000Z",
             }),
           );
         }
@@ -292,15 +342,16 @@ describe("MarketAnalysisDashboard", () => {
     expect(screen.getByText("較前次上升")).toBeInTheDocument();
   });
 
-  it("shows market-feed error on poll failure while keeping analysis snapshot intact", async () => {
+  it("shows latest-price refresh error while keeping chart and analysis snapshot intact", async () => {
     vi.useFakeTimers();
     const analysis = buildAnalysisResponse("sample");
-    let marketFeedCalls = 0;
+    let priceCalls = 0;
     const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
       const url = getRequestUrl(input);
-      if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) {
-        marketFeedCalls += 1;
-        if (marketFeedCalls === 1) return jsonResponse(buildMarketFeedResponse({ mode: "sample", price: 100000 }));
+      if (url.includes("/api/market-feed?mode=sample&timeframe=1h"))
+        return jsonResponse(buildMarketFeedResponse({ mode: "sample", price: 100000 }));
+      if (url === "/api/price?mode=sample") {
+        priceCalls += 1;
         return { ok: false, json: async () => ({ error: { code: "UPSTREAM_TIMEOUT", message: "timeout" } }) };
       }
       if (url === "/api/analyze" && init?.method === "POST") return jsonResponse(analysis);
@@ -323,6 +374,7 @@ describe("MarketAnalysisDashboard", () => {
       await vi.advanceTimersByTimeAsync(30000);
     });
 
+    expect(priceCalls).toBe(2);
     expect(screen.getByText("100000.00")).toBeInTheDocument();
     expect(screen.getByText("市場結構綜合偏多。")).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent("最新市場資料暫時無法更新。");
@@ -340,6 +392,9 @@ describe("MarketAnalysisDashboard", () => {
               completenessWarnings: ["Funding rate unavailable.", "Open interest unavailable."],
             }),
           );
+        }
+        if (url === "/api/price?mode=live") {
+          return jsonResponse(buildPriceResponse({ mode: "live" }));
         }
         if (url === "/api/analyze" && init?.method === "POST") {
           const liveResponse = buildAnalysisResponse("live");
@@ -391,6 +446,9 @@ describe("MarketAnalysisDashboard", () => {
             }),
           );
         }
+        if (url === "/api/price?mode=sample") {
+          return jsonResponse(buildPriceResponse({ mode: "sample" }));
+        }
         throw new Error(`Unexpected fetch: ${url}`);
       }),
     );
@@ -401,6 +459,34 @@ describe("MarketAnalysisDashboard", () => {
     expect(screen.getByText("Funding rate unavailable; market context is partial.")).toBeInTheDocument();
   });
 
+  it("renders market-feed funding and open interest for the selected timeframe", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: unknown) => {
+        const url = getRequestUrl(input);
+        if (url.includes("/api/market-feed?mode=live&timeframe=1h")) {
+          return jsonResponse(
+            buildMarketFeedResponse({
+              mode: "live",
+              fundingRate: 0.00025,
+              openInterest: 54321,
+            }),
+          );
+        }
+        if (url === "/api/price?mode=live") {
+          return jsonResponse(buildPriceResponse({ mode: "live" }));
+        }
+        throw new Error(`Unexpected fetch: ${url}`);
+      }),
+    );
+
+    render(<MarketAnalysisDashboard />);
+    fireEvent.click(screen.getByRole("button", { name: "LIVE" }));
+
+    expect(await screen.findByText("Funding 0.0250%")).toBeInTheDocument();
+    expect(screen.getByText("OI 54321")).toBeInTheDocument();
+  });
+
   it("does not keep stale feed visible after mode changes", async () => {
     const sampleFeed = deferredResponse();
     const liveFeed = deferredResponse();
@@ -408,6 +494,8 @@ describe("MarketAnalysisDashboard", () => {
       const url = getRequestUrl(input);
       if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) return sampleFeed.promise;
       if (url.includes("/api/market-feed?mode=live&timeframe=1h")) return liveFeed.promise;
+      if (url === "/api/price?mode=sample") return Promise.resolve(jsonResponse(buildPriceResponse({ mode: "sample" })));
+      if (url === "/api/price?mode=live") return Promise.resolve(jsonResponse(buildPriceResponse({ mode: "live", price: 200000 })));
       throw new Error(`Unexpected fetch: ${url}`);
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -458,6 +546,8 @@ describe("MarketAnalysisDashboard", () => {
         return renderCount === 1 ? sampleFeed.promise : pendingUnmountPoll.promise;
       }
       if (url.includes("/api/market-feed?mode=live&timeframe=1h")) return liveFeed.promise;
+      if (url === "/api/price?mode=sample") return Promise.resolve(jsonResponse(buildPriceResponse({ mode: "sample" })));
+      if (url === "/api/price?mode=live") return Promise.resolve(jsonResponse(buildPriceResponse({ mode: "live", price: 200000, fetchedAt: "2026-06-20T00:30:00.000Z" })));
       throw new Error(`Unexpected fetch: ${url}`);
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -504,13 +594,11 @@ describe("MarketAnalysisDashboard", () => {
       if (url === "/api/analyze" && init?.method === "POST") return jsonResponse(response);
       if (url === "/api/price?mode=live") {
         priceCalls += 1;
-        return jsonResponse({
-          symbol: "BTCUSDT",
+        return jsonResponse(buildPriceResponse({
           mode: "live",
           price: priceCalls === 1 ? 100 : 101,
           fetchedAt: priceCalls === 1 ? "2026-06-20T01:00:00.000Z" : "2026-06-20T02:00:00.000Z",
-          fixtureVersion: null,
-        });
+        }));
       }
       throw new Error(`Unexpected fetch: ${url}`);
     });
@@ -573,14 +661,8 @@ describe("MarketAnalysisDashboard", () => {
       if (url === "/api/analyze" && init?.method === "POST") return jsonResponse(response);
       if (url === "/api/price?mode=live") {
         priceCalls += 1;
-        if (priceCalls === 1) {
-          return jsonResponse({
-            symbol: "BTCUSDT",
-            mode: "live",
-            price: 100,
-            fetchedAt: "2026-06-20T01:00:00.000Z",
-            fixtureVersion: null,
-          });
+        if (priceCalls <= 2) {
+          return jsonResponse(buildPriceResponse({ mode: "live", price: 100, fetchedAt: "2026-06-20T01:00:00.000Z" }));
         }
         return jsonResponse({
           symbol: "BTCUSDT",
@@ -619,6 +701,8 @@ describe("MarketAnalysisDashboard", () => {
         const url = getRequestUrl(input);
         if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "sample" }));
         if (url.includes("/api/market-feed?mode=live&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "live" }));
+        if (url === "/api/price?mode=sample") return jsonResponse(buildPriceResponse({ mode: "sample" }));
+        if (url === "/api/price?mode=live") return jsonResponse(buildPriceResponse({ mode: "live" }));
         if (url === "/api/analyze" && init?.method === "POST") return jsonResponse(response);
         throw new Error(`Unexpected fetch: ${url}`);
       }),
@@ -640,13 +724,7 @@ describe("MarketAnalysisDashboard", () => {
       if (url.includes("/api/market-feed?mode=live&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "live" }));
       if (url === "/api/analyze" && init?.method === "POST") return jsonResponse(response);
       if (url === "/api/price?mode=live") {
-        return jsonResponse({
-          symbol: "BTCUSDT",
-          mode: "live",
-          price: 100,
-          fetchedAt: "2026-06-20T01:00:00.000Z",
-          fixtureVersion: null,
-        });
+        return jsonResponse(buildPriceResponse({ mode: "live", price: 100, fetchedAt: "2026-06-20T01:00:00.000Z" }));
       }
       throw new Error(`Unexpected fetch: ${url}`);
     });

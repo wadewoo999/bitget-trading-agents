@@ -8,15 +8,11 @@ This repository now includes a Minimum Demo analysis slice that can switch betwe
 
 The current Dashboard supports `LIVE DATA` and `SAMPLE DATA` analysis, `GET /api/price`, `GET /api/market-feed`, paper-trade preview/confirm/close, localStorage account restore, and JSON/CSV ledger export. It still does not execute real trades or use an LLM.
 
-Analysis snapshots and market-feed refresh are now separated. Decision results stay fixed until the user reruns analysis, while latest price and the timeframe-aware candlestick chart refresh every 30 seconds in both `LIVE DATA` and `SAMPLE DATA` modes.
+Analysis snapshots and market-feed refresh are now separated. Decision results stay fixed until the user reruns analysis. The 30-second refresh now updates only latest price, while the candlestick chart and market context remain tied to the current analysis snapshot.
 
-Stage 1 finishing work is focused on:
+The market feed now displays Funding / OI, and Stage 1 Minimum Demo stabilization is complete.
 
-- making snapshot vs market-feed status easier to understand
-- making live refresh visibly noticeable without rerunning analysis
-- keeping funding / OI missing-data messaging consistent
-- making paper-trading and evidence pages easier to read
-- preserving `demo-check` as the single repeatable validation path
+The active next phase is Stage 2: product completion. Current priority is Strategy Lab, deterministic backtesting, and dashboard / evidence UX polish. GetAgent Playbook, public deployment, and submission packaging are intentionally deferred until the product body is complete.
 
 ## Evidence report
 
@@ -94,9 +90,8 @@ Double-click live evidence export on macOS:
 
 ## Planned implementation order
 
-1. Minimum Demo completion and stabilization
-2. GetAgent Playbook and public evidence
-3. Strategy Lab, backtesting, and later product expansion
-4. Public deployment, README, operation guide, evidence links, demo video, and submission package
+1. Strategy Lab, deterministic backtesting, and product completion
+2. GetAgent Playbook, sandbox evidence, and live evidence chain
+3. Public deployment, README, operation guide, evidence links, demo video, and submission package
 
 The MVP is simulation-first and does not execute real-money trades. The Hackathon-sponsored Qwen API is a development resource for the participant, not a runtime product dependency.
