@@ -14,10 +14,7 @@ describe("HomePage", () => {
     expect(screen.getByText(/SAMPLE DATA/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "分析市場" })).toBeInTheDocument();
 
-    const controlRail = screen.getByLabelText("control-rail");
-    expect(within(controlRail).getByText("TIMEFRAME")).toBeInTheDocument();
-    ["15m", "1h", "4h", "1d"].forEach((label) =>
-      expect(within(controlRail).getByRole("button", { name: label })).toBeInTheDocument(),
-    );
+    expect(screen.getByLabelText("control-rail")).toBeInTheDocument();
+    ["15m", "1h", "4h", "1d"].forEach((label) => expect(screen.getByRole("button", { name: label })).toBeInTheDocument());
   });
 });

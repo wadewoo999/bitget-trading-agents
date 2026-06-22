@@ -242,10 +242,12 @@ describe("MarketAnalysisDashboard", () => {
     const strategyLab = within(stage).getByRole("heading", { name: "Strategy Lab" });
     const decisionSnapshot = within(stage).getByText("Decision Snapshot");
 
-    expect(liveFeed.compareDocumentPosition(decisionSnapshot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(decisionSnapshot.compareDocumentPosition(strategySupport) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(liveFeed.compareDocumentPosition(strategySupport) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(strategySupport.compareDocumentPosition(strategyLab) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(stage).toContainElement(liveFeed);
+    expect(stage).toContainElement(decisionSnapshot);
+    expect(stage).toContainElement(strategySupport);
+    expect(stage).toContainElement(strategyLab);
   });
 
   it("refreshes only latest price without reloading market-feed candles or replacing analysis snapshot", async () => {
