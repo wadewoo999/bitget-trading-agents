@@ -212,6 +212,8 @@ describe("MarketAnalysisDashboard", () => {
     const controlRail = screen.getByLabelText("control-rail");
     const centralCommand = screen.getByLabelText("central-command");
     const actionRail = screen.getByLabelText("action-rail");
+    expect(within(controlRail).getByText("Control Rail")).toBeInTheDocument();
+    expect(within(centralCommand).getByText("Central Command")).toBeInTheDocument();
     const riskRail = within(actionRail).getByText("Risk Rail");
     const tradeRail = within(actionRail).getByText("Trade Rail");
 
@@ -233,12 +235,15 @@ describe("MarketAnalysisDashboard", () => {
     render(<MarketAnalysisDashboard />);
     fireEvent.click(screen.getByRole("button", { name: "分析市場" }));
 
-    await waitFor(() => expect(screen.getByText("Decision Snapshot")).toBeInTheDocument());
     const stage = screen.getByLabelText("central-command");
+    await waitFor(() => expect(within(stage).getByText("Decision Snapshot")).toBeInTheDocument());
     const liveFeed = within(stage).getByRole("heading", { name: "Live Market Feed" });
     const strategySupport = within(stage).getByRole("heading", { name: "Strategy Support" });
     const strategyLab = within(stage).getByRole("heading", { name: "Strategy Lab" });
+    const decisionSnapshot = within(stage).getByText("Decision Snapshot");
 
+    expect(liveFeed.compareDocumentPosition(decisionSnapshot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(decisionSnapshot.compareDocumentPosition(strategySupport) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(liveFeed.compareDocumentPosition(strategySupport) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(strategySupport.compareDocumentPosition(strategyLab) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
