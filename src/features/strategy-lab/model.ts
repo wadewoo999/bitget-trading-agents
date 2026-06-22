@@ -26,13 +26,24 @@ export const strategyRequestSchema = z
     }
   });
 
-export const strategyConfigSchema = z.object({
-  profile: strategyProfileSchema,
-  timeframe: strategyTimeframeSchema,
-  entryRules: z.array(z.string().min(1)).min(1),
-  exitRules: z.array(z.string().min(1)).min(1),
-  riskPerTradePct: z.number().positive().max(1),
-});
+export const strategyConfigSchema = z
+  .object({
+    profile: strategyProfileSchema,
+    timeframe: strategyTimeframeSchema,
+    entryRules: z.array(z.string().min(1)).min(1),
+    exitRules: z.array(z.string().min(1)).min(1),
+    riskPerTradePct: z.number().positive().max(1),
+  })
+  .superRefine(({ profile, timeframe }, context) => {
+    const profileTimeframes: readonly string[] = allowedTimeframes[profile];
+    if (!profileTimeframes.includes(timeframe)) {
+      context.addIssue({
+        code: "custom",
+        path: ["timeframe"],
+        message: `${timeframe} is not available for the ${profile} profile`,
+      });
+    }
+  });
 
 export const backtestResultSchema = z.object({
   strategy: strategyConfigSchema,
@@ -46,6 +57,19 @@ export const backtestResultSchema = z.object({
   feeRate: z.number().nonnegative(),
   slippageRate: z.number().nonnegative(),
   equityCurve: z.array(z.object({ timestamp: z.string().datetime(), equity: z.number() })),
+  trades: z.array(
+    z.object({
+      id: z.string().min(1),
+      side: z.enum(["LONG", "SHORT"]),
+      entryAt: z.string().datetime(),
+      exitAt: z.string().datetime(),
+      entryPrice: z.number().positive(),
+      exitPrice: z.number().positive(),
+      quantity: z.number().positive(),
+      pnl: z.number(),
+      fee: z.number().nonnegative(),
+    }),
+  ),
 });
 
 export type StrategyProfile = z.infer<typeof strategyProfileSchema>;
