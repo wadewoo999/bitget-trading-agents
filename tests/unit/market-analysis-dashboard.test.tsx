@@ -209,13 +209,14 @@ describe("MarketAnalysisDashboard", () => {
   it("renders the signal-desk style layout rails in the correct order", async () => {
     render(<MarketAnalysisDashboard />);
 
-    const controlRail = screen.getByText("Control Rail");
-    const centralCommand = screen.getByText("Central Command");
-    const riskRail = screen.getByText("Risk Rail");
-    const tradeRail = screen.getByText("Trade Rail");
+    const controlRail = screen.getByLabelText("control-rail");
+    const centralCommand = screen.getByLabelText("central-command");
+    const actionRail = screen.getByLabelText("action-rail");
+    const riskRail = within(actionRail).getByText("Risk Rail");
+    const tradeRail = within(actionRail).getByText("Trade Rail");
 
     expect(controlRail.compareDocumentPosition(centralCommand) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(centralCommand.compareDocumentPosition(riskRail) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(centralCommand.compareDocumentPosition(actionRail) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(riskRail.compareDocumentPosition(tradeRail) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
@@ -234,9 +235,9 @@ describe("MarketAnalysisDashboard", () => {
 
     await waitFor(() => expect(screen.getByText("Decision Snapshot")).toBeInTheDocument());
     const stage = screen.getByLabelText("central-command");
-    const liveFeed = within(stage).getByText("Live Market Feed");
-    const strategySupport = within(stage).getByText("Strategy Support");
-    const strategyLab = within(stage).getByText("Strategy Lab");
+    const liveFeed = within(stage).getByRole("heading", { name: "Live Market Feed" });
+    const strategySupport = within(stage).getByRole("heading", { name: "Strategy Support" });
+    const strategyLab = within(stage).getByRole("heading", { name: "Strategy Lab" });
 
     expect(liveFeed.compareDocumentPosition(strategySupport) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(strategySupport.compareDocumentPosition(strategyLab) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();

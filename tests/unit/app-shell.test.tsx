@@ -16,6 +16,8 @@ describe("HomePage", () => {
 
     const controls = screen.getByText("TIMEFRAME").closest("aside");
     expect(controls).not.toBeNull();
-    expect(within(controls as HTMLElement).getByRole("button", { name: "15m" })).toBeInTheDocument();
+    ["15m", "1h", "4h", "1d"].forEach((label) =>
+      expect(within(controls as HTMLElement).getByRole("button", { name: label })).toBeInTheDocument(),
+    );
   });
 });
