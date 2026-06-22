@@ -26,16 +26,18 @@ bitget-trading-agents/
 ├── AGENTS.md
 ├── README.md
 ├── docs/
-│   ├── development/           # 現況、設計與實作計畫
+│   ├── development/           # 現況、歷史設計與開發文件
 │   ├── hackathon/             # 官方規則鏡像
-│   └── product/               # 完整產品規格
+│   ├── product/               # 完整產品規格
+│   └── superpowers/           # 新版 spec / plan 交接文件
+├── playbooks/                 # GetAgent Playbook package 草稿
 ├── fixtures/market/           # 四種 timeframe 的 Bitget 歷史快照
-├── scripts/                   # Fixture 擷取工具
+├── scripts/                   # demo-check、evidence export、其他驗證腳本
 ├── src/
 │   ├── app/                   # Next.js 頁面與 API routes
 │   ├── components/dashboard/  # Dashboard UI
-│   ├── features/              # Public contracts
-│   └── server/                # Fixture、indicator、decision pipeline
+│   ├── features/              # Public contracts 與功能模型
+│   └── server/                # Analysis、indicator、decision、market-data、strategy-lab
 └── tests/
     ├── unit/
     └── integration/

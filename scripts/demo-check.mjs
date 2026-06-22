@@ -55,6 +55,38 @@ async function expectOptionalJson(url, init, assertion, warnings) {
   }
 }
 
+async function expectBacktestEndpoint(warnings) {
+  const response = await fetch(`${BASE_URL}/api/backtest`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ profile: "balanced", timeframe: "4h" }),
+  });
+
+  if (response.status === 404) {
+    warnings.push("/api/backtest is not live in the product yet. Current one-click check validated the latest committed backend/unit backtest work through npm test.");
+    return;
+  }
+
+  if (!response.ok) {
+    throw new Error(`/api/backtest returned ${response.status}.`);
+  }
+
+  const json = await response.json();
+  assert(json.strategy?.profile === "balanced", "Backtest response profile mismatch.");
+  assert(json.strategy?.timeframe === "4h", "Backtest response timeframe mismatch.");
+  assert(typeof json.totalReturnPct === "number", "Backtest response missing total return.");
+  assert(Array.isArray(json.equityCurve), "Backtest response missing equity curve.");
+  assert(Array.isArray(json.trades), "Backtest response missing trades.");
+
+  const invalidResponse = await fetch(`${BASE_URL}/api/backtest`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ profile: "aggressive", timeframe: "4h" }),
+  });
+
+  assert(invalidResponse.status === 400, "Invalid backtest request should return 400.");
+}
+
 async function runApiChecks() {
   const warnings = [];
 
@@ -117,6 +149,8 @@ async function runApiChecks() {
   const invalidMarketFeed = await fetch(`${BASE_URL}/api/market-feed?mode=sample&timeframe=bad`);
   assert(invalidMarketFeed.status === 400, "Invalid market-feed query should return 400.");
 
+  await expectBacktestEndpoint(warnings);
+
   return warnings;
 }
 
@@ -175,7 +209,7 @@ async function main() {
   console.log("\n[demo-check] opening browser");
   await openBrowser();
   console.log(`[demo-check] Demo is running at ${BASE_URL}`);
-  console.log("[demo-check] 請檢查：mode 切換、30 秒價格刷新、K 線圖、分析不自動重跑、paper trading。");
+  console.log("[demo-check] 請檢查：mode 切換、30 秒價格刷新、K 線圖、分析不自動重跑、paper trading，以及目前是否已掛上 Strategy Lab UI。");
 
   if (process.env.EXIT_AFTER_READY === "1") {
     shutdown();

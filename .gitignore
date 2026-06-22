@@ -17,6 +17,7 @@ test-results/
 
 # Local-only evidence
 public/evidence/local/
+evidence/
 
 # Editor and OS files
 .DS_Store

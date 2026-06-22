@@ -85,6 +85,8 @@ export function MarketAnalysisDashboard() {
 
     async function loadMarketFeed() {
       const requestSequence = ++marketFeedRequestSequenceRef.current;
+      setMarketFeed(null);
+      setMarketFeedError(null);
 
       try {
         const response = await fetch(`/api/market-feed?mode=${mode}&timeframe=${timeframe}`, {
@@ -103,8 +105,6 @@ export function MarketAnalysisDashboard() {
       }
     }
 
-    setMarketFeed(null);
-    setMarketFeedError(null);
     void loadMarketFeed();
 
     return () => {
@@ -121,6 +121,13 @@ export function MarketAnalysisDashboard() {
 
     async function refreshLatestPrice() {
       const requestSequence = ++priceRequestSequenceRef.current;
+      if (requestSequence === 1) {
+        previousMarketFeedPriceRef.current = null;
+        setPriceData(null);
+        setPriceError(null);
+        setMarketFeedStatus("idle");
+        setMarketFeedPriceDirection("first");
+      }
       setMarketFeedStatus("refreshing");
 
       try {
@@ -157,11 +164,6 @@ export function MarketAnalysisDashboard() {
       }
     }
 
-    previousMarketFeedPriceRef.current = null;
-    setPriceData(null);
-    setPriceError(null);
-    setMarketFeedStatus("idle");
-    setMarketFeedPriceDirection("first");
     void refreshLatestPrice();
 
     return () => {

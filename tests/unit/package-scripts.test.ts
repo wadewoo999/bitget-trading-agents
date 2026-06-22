@@ -32,4 +32,17 @@ describe("package scripts", () => {
     expect(demoLauncher).toContain("npm run demo-check");
     expect(evidenceLauncher).toContain("npm run export-live-evidence");
   });
+
+  it("keeps demo-check aligned with the latest product verification scope", async () => {
+    const demoCheck = await readFile(
+      path.join(process.cwd(), "scripts", "demo-check.mjs"),
+      "utf8",
+    );
+
+    expect(demoCheck).toContain("/api/analyze");
+    expect(demoCheck).toContain("/api/market-feed");
+    expect(demoCheck).toContain("/api/price");
+    expect(demoCheck).toContain("/api/backtest");
+    expect(demoCheck).toContain("Strategy Lab");
+  });
 });

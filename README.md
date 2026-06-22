@@ -81,12 +81,17 @@ Double-click live evidence export on macOS:
 
 ## Repository structure
 
-- `src/app/`: Next.js pages and route handlers
-- `src/features/`: product modules and their public contracts
-- `docs/product/`: product requirements and acceptance criteria
+- `src/app/`: Next.js pages, API routes, and evidence entry page
+- `src/components/dashboard/`: dashboard presentation components
+- `src/features/`: product contracts and feature-facing state/model logic
+- `src/server/`: analysis, decision, market-data, indicator, and strategy-lab server logic
+- `scripts/`: one-click verification and evidence export scripts
+- `playbooks/`: checked-in GetAgent Playbook package drafts
+- `docs/development/`: current status plus implementation-facing docs
+- `docs/superpowers/`: design specs and execution plans for ongoing work
+- `docs/product/`: long-term product requirements and acceptance criteria
 - `docs/hackathon/`: official event rules and submission requirements
-- `docs/development/`: approved designs and implementation plans
-- `tests/`: unit, integration, fixture, and end-to-end tests as they are introduced
+- `tests/`: unit and integration coverage
 
 ## Planned implementation order
 
