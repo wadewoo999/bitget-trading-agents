@@ -209,10 +209,14 @@ describe("MarketAnalysisDashboard", () => {
   it("renders the signal-desk style layout rails in the correct order", async () => {
     render(<MarketAnalysisDashboard />);
 
-    expect(screen.getByText("Control Rail")).toBeInTheDocument();
-    expect(screen.getByText("Central Command")).toBeInTheDocument();
-    expect(screen.getByText("Risk Rail")).toBeInTheDocument();
-    expect(screen.getByText("Trade Rail")).toBeInTheDocument();
+    const controlRail = screen.getByText("Control Rail");
+    const centralCommand = screen.getByText("Central Command");
+    const riskRail = screen.getByText("Risk Rail");
+    const tradeRail = screen.getByText("Trade Rail");
+
+    expect(controlRail.compareDocumentPosition(centralCommand) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(centralCommand.compareDocumentPosition(riskRail) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(riskRail.compareDocumentPosition(tradeRail) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("keeps the central command grouped after analysis", async () => {

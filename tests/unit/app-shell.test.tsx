@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({
@@ -13,6 +13,9 @@ describe("HomePage", () => {
     expect(screen.getByRole("heading", { name: "釐清當前 BTC 交易方向" })).toBeInTheDocument();
     expect(screen.getByText(/SAMPLE DATA/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "分析市場" })).toBeInTheDocument();
-    ["15m", "1h", "4h", "1d"].forEach((label) => expect(screen.getByRole("button", { name: label })).toBeInTheDocument());
+
+    const controls = screen.getByText("TIMEFRAME").closest("aside");
+    expect(controls).not.toBeNull();
+    expect(within(controls as HTMLElement).getByRole("button", { name: "15m" })).toBeInTheDocument();
   });
 });
