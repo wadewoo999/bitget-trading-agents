@@ -57,6 +57,7 @@ export function StrategySupportPanel({ analysis, onApplyStrategyLab }: StrategyS
     categorySignals: analysis.decision.categorySignals,
   });
   const analysisKey = [
+    analysis.snapshot.symbol,
     analysis.snapshot.timeframe,
     analysis.decision.action,
     analysis.decision.confidence,
@@ -102,6 +103,7 @@ export function StrategySupportPanel({ analysis, onApplyStrategyLab }: StrategyS
     };
   }, [
     analysisKey,
+    analysis.snapshot.symbol,
     analysis.snapshot.timeframe,
     analysis.decision.action,
     analysis.decision.confidence,

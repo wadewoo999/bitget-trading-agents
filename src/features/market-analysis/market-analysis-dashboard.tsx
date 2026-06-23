@@ -19,7 +19,6 @@ import {
   analyzeResponseSchema,
   marketFeedResponseSchema,
   priceResponseSchema,
-  SYMBOLS,
   type AnalyzeResponse,
   type MarketDataMode,
   type MarketFeedResponse,
@@ -298,10 +297,10 @@ export function MarketAnalysisDashboard() {
     setStrategyLabNotice(null);
   }
 
-  const currentMarketFeed = marketFeed?.mode === mode && marketFeed?.timeframe === timeframe ? marketFeed : null;
+  const currentMarketFeed = marketFeed?.mode === mode && marketFeed?.timeframe === timeframe && marketFeed?.symbol === symbol ? marketFeed : null;
   const activeMode = analysisData?.snapshot.mode ?? currentMarketFeed?.mode ?? mode;
   const canGenerateEvidenceReport = hasMatchingEvidenceLedger(analysisData, account);
-  const currentPriceData = priceData?.mode === mode ? priceData : null;
+  const currentPriceData = priceData?.mode === mode && priceData?.symbol === symbol ? priceData : null;
   const displayPrice = currentPriceData?.price ?? currentMarketFeed?.price ?? null;
   const displayFetchedAt = currentPriceData?.fetchedAt ?? currentMarketFeed?.fetchedAt ?? null;
   const marketObservationError = marketFeedError ?? priceError;
@@ -345,7 +344,9 @@ export function MarketAnalysisDashboard() {
               onSymbol={(value) => {
                 setSymbol(value);
                 setAnalysisData(null);
+                setPreview(null);
                 setMarketFeedError(null);
+                setPriceError(null);
               }}
               onTimeframe={(value) => {
                 setTimeframe(value);
