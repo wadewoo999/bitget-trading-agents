@@ -124,11 +124,10 @@ async function runApiChecks() {
     assert(Array.isArray(json.chart) && json.chart.length === 80, "BTCUSDT sample analysis chart must have 80 points.");
   });
 
-  await expectOptionalJson(`${BASE_URL}/api/price?mode=sample&symbol=ETHUSDT`, undefined, (json) => {
-    assert(json.mode === "sample", "ETHUSDT sample price response mode mismatch.");
-    assert(json.symbol === "ETHUSDT", "ETHUSDT sample price response symbol mismatch.");
-    assert(typeof json.price === "number", "ETHUSDT sample price response missing numeric price.");
-    assert(typeof json.fixtureVersion === "string", "ETHUSDT sample price response missing fixture version.");
+  await expectOptionalJson(`${BASE_URL}/api/market-feed?mode=live&timeframe=1h&symbol=ETHUSDT`, undefined, (json) => {
+    assert(json.symbol === "ETHUSDT", "ETHUSDT live market-feed response symbol mismatch.");
+    assert(json.timeframe === "1h", "ETHUSDT live market-feed timeframe mismatch.");
+    assert(Array.isArray(json.candles) && json.candles.length === 80, "ETHUSDT live market-feed must return 80 candles.");
   }, warnings);
 
   await expectOptionalJson(`${BASE_URL}/api/price?mode=live&symbol=BTCUSDT`, undefined, (json) => {

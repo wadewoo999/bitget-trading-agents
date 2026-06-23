@@ -3,6 +3,7 @@ import path from "node:path";
 
 import type { Symbol, Timeframe } from "@/features/market-analysis/model";
 import { validateMarketFixture, type MarketFixture } from "@/server/market-data/fixture-schema";
+import { MarketDataUnavailableError } from "@/server/market-data/live-market-data";
 
 const fixtureFiles: Record<Timeframe, string> = {
   "15m": "btcusdt-15m.json",
@@ -12,7 +13,7 @@ const fixtureFiles: Record<Timeframe, string> = {
 };
 
 export async function loadMarketFixture(symbol: Symbol, timeframe: Timeframe): Promise<MarketFixture> {
-  if (symbol !== "BTCUSDT") throw new Error(`Fixtures for ${symbol} are not available. Use live mode.`);
+  if (symbol !== "BTCUSDT") throw new MarketDataUnavailableError(`Fixtures for ${symbol} are not available. Use live mode.`);
   const file = path.join(process.cwd(), "fixtures", "market", fixtureFiles[timeframe]);
   const fixture = validateMarketFixture(JSON.parse(await readFile(file, "utf8")));
   if (fixture.timeframe !== timeframe) throw new Error("Fixture timeframe mismatch");
