@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { symbolSchema } from "@/features/market-analysis/model";
+
 export const strategyProfileSchema = z.enum(["aggressive", "balanced", "conservative"]);
 export const strategyTimeframeSchema = z.enum(["15m", "1h", "4h", "1d", "1week"]);
 
@@ -13,6 +15,7 @@ export const strategyRequestSchema = z
   .object({
     profile: strategyProfileSchema,
     timeframe: strategyTimeframeSchema,
+    symbol: symbolSchema,
     idea: z.string().trim().max(500).optional(),
   })
   .superRefine(({ profile, timeframe }, context) => {

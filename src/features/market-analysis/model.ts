@@ -2,6 +2,9 @@ import { z } from "zod";
 
 import { decisionSchema } from "@/features/decision/model";
 
+export const SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "HYPEUSDT", "BNBUSDT", "XRPUSDT", "SUIUSDT", "DOGEUSDT", "ZECUSDT"] as const;
+export const symbolSchema = z.enum(SYMBOLS);
+
 export const timeframeSchema = z.enum(["15m", "1h", "4h", "1d"]);
 export const userStanceSchema = z.enum(["unsure", "long", "short"]);
 export const marketDataModeSchema = z.enum(["live", "sample"]);
@@ -26,7 +29,7 @@ export const marketIndicatorsSchema = z
 
 export const marketSnapshotSchema = z
   .object({
-    symbol: z.literal("BTCUSDT"),
+    symbol: symbolSchema,
     timeframe: timeframeSchema,
     mode: marketDataModeSchema,
     fetchedAt: z.string().datetime(),
@@ -69,7 +72,7 @@ export const chartPointSchema = z.object({
 });
 
 export const analyzeRequestSchema = z.object({
-  symbol: z.literal("BTCUSDT"),
+  symbol: symbolSchema,
   timeframe: timeframeSchema,
   stance: userStanceSchema,
   mode: marketDataModeSchema,
@@ -89,7 +92,7 @@ export const MARKET_FEED_CANDLE_COUNT = 80;
 
 export const priceResponseSchema = z
   .object({
-    symbol: z.literal("BTCUSDT"),
+    symbol: symbolSchema,
     mode: marketDataModeSchema,
     price: z.number().positive(),
     fetchedAt: z.string().datetime(),
@@ -131,7 +134,7 @@ export const marketFeedCandleSchema = z
 
 export const marketFeedResponseSchema = z
   .object({
-    symbol: z.literal("BTCUSDT"),
+    symbol: symbolSchema,
     mode: marketDataModeSchema,
     timeframe: timeframeSchema,
     price: z.number().positive(),
@@ -171,6 +174,7 @@ export const apiErrorSchema = z.object({
   error: z.object({ code: apiErrorCodeSchema, message: z.string().min(1) }),
 });
 
+export type Symbol = z.infer<typeof symbolSchema>;
 export type Timeframe = z.infer<typeof timeframeSchema>;
 export type UserStance = z.infer<typeof userStanceSchema>;
 export type MarketDataMode = z.infer<typeof marketDataModeSchema>;

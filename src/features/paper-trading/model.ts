@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   marketDataModeSchema,
+  symbolSchema,
   timeframeSchema,
 } from "@/features/market-analysis/model";
 
@@ -10,7 +11,7 @@ export const PAPER_STORAGE_KEY = "bitget-trading-agents:paper-account:v1";
 
 export const paperPositionSchema = z.object({
   id: z.string().min(1),
-  symbol: z.literal("BTCUSDT"),
+  symbol: symbolSchema,
   timeframe: timeframeSchema,
   mode: marketDataModeSchema,
   side: z.enum(["LONG", "SHORT"]),
@@ -26,7 +27,7 @@ export const paperTradeRecordSchema = z.object({
   id: z.string().min(1),
   positionId: z.string().min(1),
   timestamp: z.string().datetime(),
-  symbol: z.literal("BTCUSDT"),
+  symbol: symbolSchema,
   timeframe: timeframeSchema,
   mode: marketDataModeSchema,
   event: z.enum(["OPEN", "CLOSE"]),
