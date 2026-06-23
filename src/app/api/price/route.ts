@@ -1,4 +1,4 @@
-import { priceQuerySchema, priceResponseSchema, symbolSchema } from "@/features/market-analysis/model";
+import { priceQuerySchema, priceResponseSchema } from "@/features/market-analysis/model";
 import { loadMarketFixture } from "@/server/market-data/load-market-fixture";
 import { loadLivePrice, MarketDataUnavailableError, UpstreamTimeoutError } from "@/server/market-data/live-market-data";
 
