@@ -13,14 +13,18 @@ import {
 import { IndicatorGrid } from "@/components/dashboard/indicator-grid";
 import { MarketChart } from "@/components/dashboard/market-chart";
 import { PaperTradingPanel } from "@/components/dashboard/paper-trading-panel";
+import { StrategySupportPanel } from "@/components/dashboard/strategy-support-panel";
+import { StrategyLabPanel } from "@/components/dashboard/strategy-lab-panel";
 import {
   analyzeResponseSchema,
   marketFeedResponseSchema,
   priceResponseSchema,
+  SYMBOLS,
   type AnalyzeResponse,
   type MarketDataMode,
   type MarketFeedResponse,
   type PriceResponse,
+  type Symbol,
   type Timeframe,
   type UserStance,
 } from "@/features/market-analysis/model";
@@ -36,6 +40,7 @@ import {
   type TradePreview,
 } from "@/features/paper-trading/engine";
 import type { PaperAccount } from "@/features/paper-trading/model";
+import type { StrategyProfile, StrategyTimeframe } from "@/features/strategy-lab/model";
 
 function restoreInitialAccount(): PaperAccount {
   if (typeof window === "undefined") return createInitialPaperAccount();
@@ -55,9 +60,10 @@ function formatMarketContextValue(label: string, value: number | null, formatter
 
 export function MarketAnalysisDashboard() {
   const router = useRouter();
+  const [symbol, setSymbol] = useState<Symbol>("BTCUSDT");
   const [timeframe, setTimeframe] = useState<Timeframe>("1h");
   const [stance, setStance] = useState<UserStance>("unsure");
-  const [mode, setMode] = useState<MarketDataMode>("sample");
+  const [mode] = useState<MarketDataMode>("live");
   const [loading, setLoading] = useState(false);
   const [analysisData, setAnalysisData] = useState<AnalyzeResponse | null>(null);
   const [marketFeed, setMarketFeed] = useState<MarketFeedResponse | null>(null);
@@ -70,6 +76,9 @@ export function MarketAnalysisDashboard() {
   const [account, setAccount] = useState<PaperAccount>(restoreInitialAccount);
   const [preview, setPreview] = useState<TradePreview | null>(null);
   const [resetNotice] = useState<string | null>(restoreInitialResetNotice);
+  const [strategyLabProfile, setStrategyLabProfile] = useState<StrategyProfile>("balanced");
+  const [strategyLabTimeframe, setStrategyLabTimeframe] = useState<StrategyTimeframe>("4h");
+  const [strategyLabNotice, setStrategyLabNotice] = useState<string | null>(null);
   const marketFeedRequestSequenceRef = useRef(0);
   const priceRequestSequenceRef = useRef(0);
   const previousMarketFeedPriceRef = useRef<number | null>(null);
@@ -89,7 +98,7 @@ export function MarketAnalysisDashboard() {
       setMarketFeedError(null);
 
       try {
-        const response = await fetch(`/api/market-feed?mode=${mode}&timeframe=${timeframe}`, {
+        const response = await fetch(`/api/market-feed?mode=${mode}&timeframe=${timeframe}&symbol=${symbol}`, {
           signal: controller.signal,
         });
         const json: unknown = await response.json();
@@ -112,7 +121,7 @@ export function MarketAnalysisDashboard() {
       marketFeedRequestSequenceRef.current += 1;
       controller.abort();
     };
-  }, [mode, timeframe]);
+  }, [mode, timeframe, symbol]);
 
   useEffect(() => {
     let disposed = false;
@@ -131,7 +140,7 @@ export function MarketAnalysisDashboard() {
       setMarketFeedStatus("refreshing");
 
       try {
-        const response = await fetch(`/api/price?mode=${mode}`, {
+        const response = await fetch(`/api/price?mode=${mode}&symbol=${symbol}`, {
           signal: controller.signal,
         });
         const json: unknown = await response.json();
@@ -172,7 +181,7 @@ export function MarketAnalysisDashboard() {
       controller.abort();
       if (timeoutId !== null) window.clearTimeout(timeoutId);
     };
-  }, [mode, timeframe]);
+  }, [mode, timeframe, symbol]);
 
   async function analyze() {
     setLoading(true);
@@ -182,7 +191,7 @@ export function MarketAnalysisDashboard() {
       const response = await fetch("/api/analyze", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ symbol: "BTCUSDT", timeframe, stance, mode }),
+        body: JSON.stringify({ symbol, timeframe, stance, mode }),
       });
       const json: unknown = await response.json();
       if (!response.ok) throw new Error("分析暫時無法完成。");
@@ -197,8 +206,8 @@ export function MarketAnalysisDashboard() {
     }
   }
 
-  async function fetchTradePrice(targetMode: MarketDataMode) {
-    const response = await fetch(`/api/price?mode=${targetMode}`);
+  async function fetchTradePrice(targetMode: MarketDataMode, targetSymbol?: Symbol) {
+    const response = await fetch(`/api/price?mode=${targetMode}&symbol=${targetSymbol ?? symbol}`);
     const json: unknown = await response.json();
     if (!response.ok) throw new Error("價格暫時無法取得。");
     const parsed = priceResponseSchema.safeParse(json);
@@ -212,7 +221,7 @@ export function MarketAnalysisDashboard() {
     setError(null);
 
     try {
-      const latest = await fetchTradePrice(analysisData.snapshot.mode);
+      const latest = await fetchTradePrice(analysisData.snapshot.mode, analysisData.snapshot.symbol);
       setPreview(
         createTradePreview({
           account,
@@ -240,7 +249,7 @@ export function MarketAnalysisDashboard() {
     setError(null);
 
     try {
-      const latest = await fetchTradePrice(account.openPosition.mode);
+      const latest = await fetchTradePrice(account.openPosition.mode, account.openPosition.symbol);
       setAccount(closeOpenPosition({ account, exitPrice: latest.price, closedAt: latest.fetchedAt }));
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "價格暫時無法取得。");
@@ -277,6 +286,18 @@ export function MarketAnalysisDashboard() {
     }
   }
 
+  function applyStrategyLabSelection(profile: StrategyProfile, timeframe: StrategyTimeframe) {
+    setStrategyLabProfile(profile);
+    setStrategyLabTimeframe(timeframe);
+    setStrategyLabNotice(`目前已帶入：${profile === "aggressive" ? "激進" : profile === "balanced" ? "平衡" : "穩健"} · ${timeframe}`);
+  }
+
+  function updateStrategyLabSelection(profile: StrategyProfile, timeframe: StrategyTimeframe) {
+    setStrategyLabProfile(profile);
+    setStrategyLabTimeframe(timeframe);
+    setStrategyLabNotice(null);
+  }
+
   const currentMarketFeed = marketFeed?.mode === mode && marketFeed?.timeframe === timeframe ? marketFeed : null;
   const activeMode = analysisData?.snapshot.mode ?? currentMarketFeed?.mode ?? mode;
   const canGenerateEvidenceReport = hasMatchingEvidenceLedger(analysisData, account);
@@ -284,10 +305,6 @@ export function MarketAnalysisDashboard() {
   const displayPrice = currentPriceData?.price ?? currentMarketFeed?.price ?? null;
   const displayFetchedAt = currentPriceData?.fetchedAt ?? currentMarketFeed?.fetchedAt ?? null;
   const marketObservationError = marketFeedError ?? priceError;
-  const sampleFeedHint =
-    mode === "sample"
-      ? "此模式每 30 秒只刷新價格；K 線與上下文仍來自固定快照。"
-      : null;
   const marketFeedPriceDirectionLabel =
     marketFeedPriceDirection === "first"
       ? "首次載入"
@@ -301,7 +318,7 @@ export function MarketAnalysisDashboard() {
     <main className="workspace">
       <header className="topbar">
         <a className="brand" href="https://github.com/wadewoo999/bitget-trading-agents">
-          BITGET / BTC DECISION WORKSPACE
+          BITGET / DECISION WORKSPACE
         </a>
         <span className={activeMode === "live" ? "data-badge live" : "data-badge sample"}>
           {activeMode === "live" ? "LIVE DATA" : "SAMPLE DATA"}
@@ -310,34 +327,53 @@ export function MarketAnalysisDashboard() {
 
       <section className="intro">
         <p>BITGET AI BASE CAMP HACKATHON S1</p>
-        <h1>釐清當前 BTC 交易方向</h1>
-        <span>
-          {activeMode === "live"
-            ? "選擇時間級別、資料模式與初始觀點，系統會用即時 Bitget 市場資料整理下一步。"
-            : "選擇時間級別與你的初始觀點，系統會用可追溯樣本資料整理下一步。"}
-        </span>
+        <h1>釐清當前交易方向</h1>
       </section>
 
-      <div className="workspace-grid">
-        <AnalysisControls
-          timeframe={timeframe}
-          stance={stance}
-          mode={mode}
-          loading={loading}
-          onTimeframe={(value) => {
-            setTimeframe(value);
-            setMarketFeedError(null);
-          }}
-          onStance={setStance}
-          onMode={(value) => {
-            setMode(value);
-            setPreview(null);
-            setMarketFeedError(null);
-          }}
-          onAnalyze={analyze}
-        />
+      <div className="signal-desk-layout">
+        <aside aria-label="control-rail" className="control-rail">
+          <section className="rail-shell">
+            <div className="rail-header">
+              <h2>Control Rail</h2>
+            </div>
 
-        <div className="results">
+            <AnalysisControls
+              symbol={symbol}
+              timeframe={timeframe}
+              stance={stance}
+              loading={loading}
+              onSymbol={(value) => {
+                setSymbol(value);
+                setAnalysisData(null);
+                setMarketFeedError(null);
+              }}
+              onTimeframe={(value) => {
+                setTimeframe(value);
+                setMarketFeedError(null);
+              }}
+              onStance={setStance}
+              onAnalyze={analyze}
+            />
+
+            {analysisData ? (
+              <section className="panel left-judgement-panel">
+                <div className="panel-header">
+                  <div>
+                    <p className="panel-label">市場判讀拆解</p>
+                    <h3>Signal Breakdown</h3>
+                  </div>
+                </div>
+                <IndicatorGrid data={analysisData} />
+              </section>
+            ) : null}
+          </section>
+        </aside>
+
+        <section aria-label="central-command" className="central-command">
+          <div className="rail-header central-command-header">
+            <h2>Central Command</h2>
+          </div>
+
           {(currentMarketFeed || marketFeedError || marketFeedStatus === "refreshing") && (
             <section className="panel market-feed-panel" aria-label="市場即時觀測">
               <div className="panel-header">
@@ -349,7 +385,6 @@ export function MarketAnalysisDashboard() {
                   {marketFeedStatus === "refreshing" ? "更新中…" : marketFeedStatus === "updated" ? "剛剛更新" : "等待首次更新"}
                 </span>
               </div>
-              <p className="panel-summary">此區塊每 30 秒只刷新最新價格；K 線與市場上下文不會自動改寫。</p>
               {currentMarketFeed && displayPrice !== null && displayFetchedAt && (
                 <>
                   <MarketChart
@@ -375,7 +410,6 @@ export function MarketAnalysisDashboard() {
                       ))}
                     </ul>
                   )}
-                  {sampleFeedHint && <p className="market-feed-note">{sampleFeedHint}</p>}
                 </>
               )}
 
@@ -403,62 +437,70 @@ export function MarketAnalysisDashboard() {
                   </div>
                   <span className="panel-meta">產生時間：{new Date(analysisData.snapshot.fetchedAt).toLocaleTimeString("zh-TW", { hour12: false })}</span>
                 </div>
-                <p className="panel-summary">此分析結果會保持固定；若要刷新判斷，請重新執行分析。</p>
                 <DecisionCard data={analysisData} />
               </section>
-              <PaperTradingPanel
-                analysis={analysisData}
-                account={account}
-                preview={preview}
-                resetNotice={resetNotice}
-                loading={loading}
-                onPreview={previewTrade}
-                onConfirm={confirmPreview}
-                onCancel={() => setPreview(null)}
-                onClose={closeTrade}
-                onExportJson={() => downloadFile("paper-ledger.json", exportLedgerJson(account), "application/json")}
-                onExportCsv={() => downloadFile("paper-ledger.csv", exportLedgerCsv(account), "text/csv")}
-                onGenerateEvidenceReport={generateEvidenceReport}
-                canGenerateEvidenceReport={canGenerateEvidenceReport}
+              <StrategySupportPanel analysis={analysisData} onApplyStrategyLab={applyStrategyLabSelection} />
+              <StrategyLabPanel
+                symbol={symbol}
+                selectedNotice={strategyLabNotice}
+                selectedProfile={strategyLabProfile}
+                selectedTimeframe={strategyLabTimeframe}
+                onSelectionChange={updateStrategyLabSelection}
               />
-              <IndicatorGrid data={analysisData} />
-              <AnalysisDetails data={analysisData} />
             </>
           ) : (
             !error && (
-              <>
-                <PaperTradingPanel
-                  analysis={null}
-                  account={account}
-                  preview={preview}
-                  resetNotice={resetNotice}
-                  loading={loading}
-                  onPreview={previewTrade}
-                  onConfirm={confirmPreview}
-                  onCancel={() => setPreview(null)}
-                  onClose={closeTrade}
-                  onExportJson={() => downloadFile("paper-ledger.json", exportLedgerJson(account), "application/json")}
-                  onExportCsv={() => downloadFile("paper-ledger.csv", exportLedgerCsv(account), "text/csv")}
-                  onGenerateEvidenceReport={generateEvidenceReport}
-                  canGenerateEvidenceReport={canGenerateEvidenceReport}
-                />
-                <section className="panel empty-state">
-                  <p className="panel-label">READY</p>
-                  <h2>選擇條件後開始分析</h2>
-                  <p>
-                    {mode === "live"
-                      ? "結果將顯示 0–100 score、方向、EMA 圖表與 live completeness warnings。"
-                      : "結果將顯示 0–100 score、方向、EMA 圖表、理由與風險。"}
-                  </p>
-                </section>
-              </>
+              <section className="panel empty-state">
+                <p className="panel-label">READY</p>
+                <h2>選擇條件後開始分析</h2>
+                <p>
+                  結果會先整理即時市場觀測，再產出固定 decision、strategy support 與 strategy lab 驗證入口。
+                </p>
+              </section>
             )
           )}
-        </div>
+        </section>
+
+        <aside aria-label="action-rail" className="action-rail">
+          <section className="action-rail-section risk-rail">
+            <div className="rail-header">
+              <h2>Risk Rail</h2>
+            </div>
+            {analysisData ? (
+              <AnalysisDetails data={analysisData} />
+            ) : (
+              <section className="panel empty-risk-panel">
+                <p className="panel-label">風險摘要</p>
+                <h3>等待分析結果</h3>
+              </section>
+            )}
+          </section>
+
+          <section className="action-rail-section trade-rail">
+            <div className="rail-header">
+              <h2>Trade Rail</h2>
+            </div>
+            <PaperTradingPanel
+              analysis={analysisData}
+              account={account}
+              preview={preview}
+              resetNotice={resetNotice}
+              loading={loading}
+              onPreview={previewTrade}
+              onConfirm={confirmPreview}
+              onCancel={() => setPreview(null)}
+              onClose={closeTrade}
+              onExportJson={() => downloadFile("paper-ledger.json", exportLedgerJson(account), "application/json")}
+              onExportCsv={() => downloadFile("paper-ledger.csv", exportLedgerCsv(account), "text/csv")}
+              onGenerateEvidenceReport={generateEvidenceReport}
+              canGenerateEvidenceReport={canGenerateEvidenceReport}
+            />
+          </section>
+        </aside>
       </div>
 
       <footer className="workspace-footer">
-        <span>{activeMode === "live" ? "LIVE / SAMPLE MARKET ANALYSIS · MINIMUM DEMO" : "SAMPLE MARKET ANALYSIS · PHASE 2+"}</span>
+        <span>LIVE MARKET ANALYSIS · MINIMUM DEMO</span>
         <span>NO REAL TRADING</span>
       </footer>
     </main>
