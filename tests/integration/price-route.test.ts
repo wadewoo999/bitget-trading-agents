@@ -11,7 +11,7 @@ function createBitgetResponse(payload: unknown) {
 
 describe("GET /api/price", () => {
   it("returns sample price data", async () => {
-    const response = await GET(new Request("http://localhost/api/price?mode=sample"));
+    const response = await GET(new Request("http://localhost/api/price?mode=sample&symbol=BTCUSDT"));
     expect(response.status).toBe(200);
     expect((await response.json()).fixtureVersion).toContain("1h");
   });
@@ -28,7 +28,7 @@ describe("GET /api/price", () => {
       ),
     );
 
-    const response = await GET(new Request("http://localhost/api/price?mode=live"));
+    const response = await GET(new Request("http://localhost/api/price?mode=live&symbol=BTCUSDT"));
     expect(response.status).toBe(200);
     expect((await response.json()).fixtureVersion).toBeNull();
   });

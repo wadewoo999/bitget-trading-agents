@@ -44,7 +44,7 @@ describe("GET /api/market-feed", () => {
     });
 
     const response = await GET(
-      new Request("http://localhost/api/market-feed?mode=sample&timeframe=1h"),
+      new Request("http://localhost/api/market-feed?mode=sample&timeframe=1h&symbol=BTCUSDT"),
     );
     const json = await response.json();
 
@@ -53,7 +53,7 @@ describe("GET /api/market-feed", () => {
   });
 
   it("rejects invalid query params", async () => {
-    const response = await GET(new Request("http://localhost/api/market-feed?mode=sample"));
+    const response = await GET(new Request("http://localhost/api/market-feed?mode=sample&symbol=BTCUSDT"));
     expect(response.status).toBe(400);
     expect(apiErrorSchema.parse(await response.json()).error.code).toBe("INVALID_INPUT");
   });
@@ -76,7 +76,7 @@ describe("GET /api/market-feed", () => {
     });
 
     const response = await GET(
-      new Request("http://localhost/api/market-feed?mode=live&timeframe=15m"),
+      new Request("http://localhost/api/market-feed?mode=live&timeframe=15m&symbol=BTCUSDT"),
     );
     const json = marketFeedResponseSchema.parse(await response.json());
 
@@ -110,7 +110,7 @@ describe("GET /api/market-feed", () => {
     );
 
     const response = await GET(
-      new Request("http://localhost/api/market-feed?mode=live&timeframe=1h"),
+      new Request("http://localhost/api/market-feed?mode=live&timeframe=1h&symbol=BTCUSDT"),
     );
 
     expect(response.status).toBe(422);
@@ -123,7 +123,7 @@ describe("GET /api/market-feed", () => {
     );
 
     const response = await GET(
-      new Request("http://localhost/api/market-feed?mode=live&timeframe=1h"),
+      new Request("http://localhost/api/market-feed?mode=live&timeframe=1h&symbol=BTCUSDT"),
     );
 
     expect(response.status).toBe(504);
@@ -136,7 +136,7 @@ describe("GET /api/market-feed", () => {
     );
 
     const response = await GET(
-      new Request("http://localhost/api/market-feed?mode=live&timeframe=1h"),
+      new Request("http://localhost/api/market-feed?mode=live&timeframe=1h&symbol=BTCUSDT"),
     );
 
     expect(response.status).toBe(503);

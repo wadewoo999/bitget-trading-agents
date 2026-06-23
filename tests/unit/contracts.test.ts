@@ -12,11 +12,11 @@ describe("Strategy Lab contract", () => {
     ["conservative", "1d"],
     ["conservative", "1week"],
   ])("accepts %s profile with %s", (profile, timeframe) => {
-    expect(strategyRequestSchema.safeParse({ profile, timeframe }).success).toBe(true);
+    expect(strategyRequestSchema.safeParse({ profile, timeframe, symbol: "BTCUSDT" }).success).toBe(true);
   });
 
   it("rejects aggressive profile with 4h timeframe", () => {
-    const result = strategyRequestSchema.safeParse({ profile: "aggressive", timeframe: "4h" });
+    const result = strategyRequestSchema.safeParse({ profile: "aggressive", timeframe: "4h", symbol: "BTCUSDT" });
 
     expect(result.success).toBe(false);
     expect(result.error?.issues[0]?.path).toEqual(["timeframe"]);
@@ -25,6 +25,7 @@ describe("Strategy Lab contract", () => {
   it("accepts balanced profile with 4h timeframe and idea", () => {
     expect(
       strategyRequestSchema.parse({
+        symbol: "BTCUSDT",
         profile: "balanced",
         timeframe: "4h",
         idea: "只在 EMA 結構與 RSI 支持時進場",
@@ -35,6 +36,7 @@ describe("Strategy Lab contract", () => {
   it("accepts backtest result trades", () => {
     expect(
       backtestResultSchema.parse({
+        symbol: "BTCUSDT",
         strategy: {
           profile: "balanced",
           timeframe: "4h",
@@ -85,6 +87,7 @@ describe("Strategy Lab contract", () => {
 
   it("rejects backtest results with invalid strategy profile and timeframe pairs", () => {
     const result = backtestResultSchema.safeParse({
+      symbol: "BTCUSDT",
       strategy: {
         profile: "aggressive",
         timeframe: "4h",
