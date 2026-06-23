@@ -38,6 +38,7 @@ describe("Strategy Lab contract", () => {
       backtestResultSchema.parse({
         symbol: "BTCUSDT",
         strategy: {
+          symbol: "BTCUSDT",
           profile: "balanced",
           timeframe: "4h",
           entryRules: ["close > ema20"],
@@ -89,6 +90,7 @@ describe("Strategy Lab contract", () => {
     const result = backtestResultSchema.safeParse({
       symbol: "BTCUSDT",
       strategy: {
+        symbol: "BTCUSDT",
         profile: "aggressive",
         timeframe: "4h",
         entryRules: ["close > ema20"],
