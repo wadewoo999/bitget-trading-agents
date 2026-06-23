@@ -12,7 +12,7 @@ export async function POST(request: Request): Promise<Response> {
   const parsed = analyzeRequestSchema.safeParse(body);
   if (!parsed.success) return error(400, "INVALID_INPUT", "請確認 symbol、timeframe、stance 與 mode。");
   try {
-    return Response.json(await analyzeMarket({ timeframe: parsed.data.timeframe, stance: parsed.data.stance, mode: parsed.data.mode }));
+    return Response.json(await analyzeMarket({ symbol: parsed.data.symbol, timeframe: parsed.data.timeframe, stance: parsed.data.stance, mode: parsed.data.mode }));
   } catch (cause) {
     if (cause instanceof InsufficientCandlesError) return error(422, "INSUFFICIENT_CANDLES", "At least 250 closed candles are required.");
     if (cause instanceof UpstreamTimeoutError) return error(504, "UPSTREAM_TIMEOUT", "Bitget request timed out.");

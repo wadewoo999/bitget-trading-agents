@@ -45,6 +45,7 @@ export function buildStrategyConfig(input: StrategyRequest) {
 
   return strategyConfigSchema.parse({
     profile: request.profile,
+    symbol: request.symbol,
     timeframe: request.timeframe,
     entryRules: rules.entryRules,
     exitRules: rules.exitRules,

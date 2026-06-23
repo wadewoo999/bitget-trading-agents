@@ -18,9 +18,10 @@ export async function GET(request: Request): Promise<Response> {
   const parsed = marketFeedQuerySchema.safeParse({
     mode: url.searchParams.get("mode"),
     timeframe: url.searchParams.get("timeframe"),
+    symbol: url.searchParams.get("symbol"),
   });
 
-  if (!parsed.success) return error(400, "INVALID_INPUT", "請確認 mode 與 timeframe。");
+  if (!parsed.success) return error(400, "INVALID_INPUT", "請確認 mode、timeframe 與 symbol。");
 
   try {
     return Response.json(await loadMarketFeed(parsed.data));

@@ -51,7 +51,7 @@ function calculateSharpeRatio(equityCurve: BacktestResult["equityCurve"]) {
 
 export async function runBacktest(input: StrategyConfig): Promise<BacktestResult> {
   const strategy = strategyConfigSchema.parse(input);
-  const market = await loadBacktestMarket(strategy.timeframe);
+  const market = await loadBacktestMarket(strategy.symbol, strategy.timeframe);
   const closes = market.candles.map((candle) => candle.close);
   const ema20 = calculateEma(closes, 20);
   const ema50 = calculateEma(closes, 50);
@@ -128,6 +128,7 @@ export async function runBacktest(input: StrategyConfig): Promise<BacktestResult
   const winningTrades = trades.filter((trade) => trade.pnl > 0).length;
   return backtestResultSchema.parse({
     strategy,
+    symbol: strategy.symbol,
     periodStart,
     periodEnd,
     totalReturnPct: Number((((equityCurve.at(-1)?.equity ?? STARTING_EQUITY) / STARTING_EQUITY - 1) * 100).toFixed(4)),

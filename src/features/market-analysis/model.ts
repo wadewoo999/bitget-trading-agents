@@ -87,7 +87,7 @@ export const analyzeResponseSchema = z.object({
   chart: z.array(chartPointSchema).length(80),
 });
 
-export const priceQuerySchema = z.object({ mode: marketDataModeSchema });
+export const priceQuerySchema = z.object({ mode: marketDataModeSchema, symbol: symbolSchema });
 export const MARKET_FEED_CANDLE_COUNT = 80;
 
 export const priceResponseSchema = z
@@ -118,6 +118,7 @@ export const priceResponseSchema = z
 export const marketFeedQuerySchema = z.object({
   mode: marketDataModeSchema,
   timeframe: timeframeSchema,
+  symbol: symbolSchema,
 });
 
 export const marketFeedCandleSchema = z

@@ -1,6 +1,6 @@
-import type { AnalyzeResponse, Timeframe, UserStance } from "@/features/market-analysis/model";
+import type { AnalyzeResponse, Symbol, Timeframe, UserStance } from "@/features/market-analysis/model";
 import { analyzeMarket } from "@/server/analysis/analyze-market";
 
-export async function analyzeSampleMarket({ timeframe, stance }: { timeframe: Timeframe; stance: UserStance }): Promise<AnalyzeResponse> {
-  return analyzeMarket({ timeframe, stance, mode: "sample" });
+export async function analyzeSampleMarket({ symbol, timeframe, stance }: { symbol: Symbol; timeframe: Timeframe; stance: UserStance }): Promise<AnalyzeResponse> {
+  return analyzeMarket({ symbol, timeframe, stance, mode: "sample" });
 }

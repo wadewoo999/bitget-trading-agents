@@ -32,6 +32,7 @@ export const strategyRequestSchema = z
 export const strategyConfigSchema = z
   .object({
     profile: strategyProfileSchema,
+    symbol: symbolSchema,
     timeframe: strategyTimeframeSchema,
     entryRules: z.array(z.string().min(1)).min(1),
     exitRules: z.array(z.string().min(1)).min(1),
@@ -50,6 +51,7 @@ export const strategyConfigSchema = z
 
 export const backtestResultSchema = z.object({
   strategy: strategyConfigSchema,
+  symbol: symbolSchema,
   periodStart: z.string().datetime(),
   periodEnd: z.string().datetime(),
   totalReturnPct: z.number(),

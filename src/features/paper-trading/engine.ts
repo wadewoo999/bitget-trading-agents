@@ -49,7 +49,7 @@ export function createTradePreview({
   const estimatedOpenFee = entryPrice * quantity * FEE_RATE;
   return {
     id: `paper-${fetchedAt}`,
-    symbol: "BTCUSDT",
+    symbol: analysis.snapshot.symbol,
     timeframe: analysis.snapshot.timeframe,
     mode: analysis.snapshot.mode,
     side,
