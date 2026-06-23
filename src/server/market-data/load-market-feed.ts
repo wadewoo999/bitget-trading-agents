@@ -3,6 +3,7 @@ import {
   marketFeedResponseSchema,
   type MarketDataMode,
   type MarketFeedResponse,
+  type Symbol,
   type Timeframe,
 } from "@/features/market-analysis/model";
 import { buildMarketCompletenessWarnings } from "@/server/market-data/completeness-warnings";
@@ -14,16 +15,18 @@ import {
 import { fixtureToNormalizedMarketData } from "@/server/market-data/normalized-market-data";
 
 export async function loadMarketFeed({
+  symbol,
   mode,
   timeframe,
 }: {
+  symbol: Symbol;
   mode: MarketDataMode;
   timeframe: Timeframe;
 }): Promise<MarketFeedResponse> {
   const marketData =
     mode === "sample"
-      ? fixtureToNormalizedMarketData(await loadMarketFixture(timeframe))
-      : await loadLiveMarketData(timeframe);
+      ? fixtureToNormalizedMarketData(await loadMarketFixture(symbol, timeframe))
+      : await loadLiveMarketData(symbol, timeframe);
 
   const candles = marketData.candles.slice(-MARKET_FEED_CANDLE_COUNT);
   if (candles.length !== MARKET_FEED_CANDLE_COUNT) {

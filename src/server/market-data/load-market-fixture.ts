@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import type { Timeframe } from "@/features/market-analysis/model";
+import type { Symbol, Timeframe } from "@/features/market-analysis/model";
 import { validateMarketFixture, type MarketFixture } from "@/server/market-data/fixture-schema";
 
 const fixtureFiles: Record<Timeframe, string> = {
@@ -11,7 +11,8 @@ const fixtureFiles: Record<Timeframe, string> = {
   "1d": "btcusdt-1d.json",
 };
 
-export async function loadMarketFixture(timeframe: Timeframe): Promise<MarketFixture> {
+export async function loadMarketFixture(symbol: Symbol, timeframe: Timeframe): Promise<MarketFixture> {
+  if (symbol !== "BTCUSDT") throw new Error(`Fixtures for ${symbol} are not available. Use live mode.`);
   const file = path.join(process.cwd(), "fixtures", "market", fixtureFiles[timeframe]);
   const fixture = validateMarketFixture(JSON.parse(await readFile(file, "utf8")));
   if (fixture.timeframe !== timeframe) throw new Error("Fixture timeframe mismatch");

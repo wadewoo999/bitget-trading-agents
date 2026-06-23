@@ -1,10 +1,9 @@
-import type { Timeframe } from "@/features/market-analysis/model";
+import type { Symbol, Timeframe } from "@/features/market-analysis/model";
 import { marketCandleSchema } from "@/server/market-data/fixture-schema";
 import type { NormalizedMarketData } from "@/server/market-data/normalized-market-data";
 
 const BITGET_BASE_URL = "https://api.bitget.com";
 const PRODUCT_TYPE = "USDT-FUTURES";
-const SYMBOL = "BTCUSDT";
 const REQUEST_TIMEOUT_MS = 8000;
 
 const timeframeConfig: Record<Timeframe, { granularity: string; intervalMs: number }> = {
@@ -25,6 +24,7 @@ export class InsufficientCandlesError extends Error {}
 export class UpstreamTimeoutError extends Error {}
 
 interface NormalizeLiveMarketDataInput {
+  symbol: Symbol;
   timeframe: Timeframe;
   fetchedAt: string;
   ticker: BitgetTickerPayload;
@@ -65,7 +65,7 @@ async function requestBitget<T>(pathname: string, params: Record<string, string 
   };
 }
 
-async function requestBitgetCandles(timeframe: Timeframe) {
+async function requestBitgetCandles(symbol: Symbol, timeframe: Timeframe) {
   const { granularity } = timeframeConfig[timeframe];
   const candles: BitgetCandlePayload = [];
   let endTime = Date.now();
@@ -74,7 +74,7 @@ async function requestBitgetCandles(timeframe: Timeframe) {
 
   while (candles.length < 300) {
     const response = await requestBitget<BitgetCandlePayload>("/api/v2/mix/market/history-candles", {
-      symbol: SYMBOL,
+      symbol,
       productType: PRODUCT_TYPE,
       granularity,
       limit: 200,
@@ -93,6 +93,7 @@ async function requestBitgetCandles(timeframe: Timeframe) {
 }
 
 export function normalizeLiveMarketData({
+  symbol,
   timeframe,
   fetchedAt,
   ticker,
@@ -129,7 +130,7 @@ export function normalizeLiveMarketData({
   if (latestTickerPrice === null) throw new MarketDataUnavailableError("Ticker price is unavailable.");
 
   return {
-    symbol: SYMBOL,
+    symbol,
     timeframe,
     fetchedAt,
     sourceRequestTime,
@@ -142,18 +143,19 @@ export function normalizeLiveMarketData({
   };
 }
 
-export async function loadLiveMarketData(timeframe: Timeframe): Promise<NormalizedMarketData> {
+export async function loadLiveMarketData(symbol: Symbol, timeframe: Timeframe): Promise<NormalizedMarketData> {
   const fetchedAt = new Date().toISOString();
-  const common = { symbol: SYMBOL, productType: PRODUCT_TYPE };
+  const common = { symbol, productType: PRODUCT_TYPE };
   const [ticker, funding, openInterest, candles] = await Promise.all([
     requestBitget<BitgetTickerPayload>("/api/v2/mix/market/ticker", common),
     requestBitget<BitgetFundingRatePayload>("/api/v2/mix/market/current-fund-rate", common),
     requestBitget<BitgetOpenInterestPayload>("/api/v2/mix/market/open-interest", common),
-    requestBitgetCandles(timeframe),
+    requestBitgetCandles(symbol, timeframe),
   ]);
 
   return {
     ...normalizeLiveMarketData({
+      symbol,
       timeframe,
       fetchedAt,
       ticker: ticker.data,
@@ -172,12 +174,12 @@ export async function loadLiveMarketData(timeframe: Timeframe): Promise<Normaliz
   };
 }
 
-export async function loadLivePrice() {
+export async function loadLivePrice(symbol: Symbol) {
   const ticker = await requestBitget<BitgetTickerPayload>("/api/v2/mix/market/ticker", {
-    symbol: SYMBOL,
+    symbol,
     productType: PRODUCT_TYPE,
   });
   const price = toNumber(ticker.data[0]?.lastPr);
   if (price === null) throw new MarketDataUnavailableError("Ticker price is unavailable.");
-  return { symbol: SYMBOL, mode: "live" as const, price, fetchedAt: ticker.requestedAt, fixtureVersion: null };
+  return { symbol, mode: "live" as const, price, fetchedAt: ticker.requestedAt, fixtureVersion: null };
 }

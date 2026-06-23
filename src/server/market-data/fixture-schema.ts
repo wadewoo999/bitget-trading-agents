@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { timeframeSchema } from "@/features/market-analysis/model";
+import { symbolSchema, timeframeSchema } from "@/features/market-analysis/model";
 
 export const marketCandleSchema = z.object({
   openTime: z.string().datetime(),
@@ -15,7 +15,7 @@ export const marketCandleSchema = z.object({
 export const marketFixtureSchema = z
   .object({
     version: z.string().min(1),
-    symbol: z.literal("BTCUSDT"),
+    symbol: symbolSchema,
     timeframe: timeframeSchema,
     capturedAt: z.string().datetime(),
     tickerPrice: z.number().positive(),

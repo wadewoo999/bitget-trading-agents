@@ -1,12 +1,13 @@
 import type {
   MarketDataMode,
   MarketSource,
+  Symbol,
   Timeframe,
 } from "@/features/market-analysis/model";
 import type { MarketCandle, MarketFixture } from "@/server/market-data/fixture-schema";
 
 export interface NormalizedMarketData {
-  symbol: "BTCUSDT";
+  symbol: Symbol;
   timeframe: Timeframe;
   mode: MarketDataMode;
   fetchedAt: string;
