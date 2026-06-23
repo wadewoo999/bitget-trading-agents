@@ -4,7 +4,7 @@ import { buildStrategyConfig } from "@/server/strategy-lab/build-strategy-config
 
 describe("buildStrategyConfig", () => {
   it("returns 1 percent risk for aggressive 15m requests", () => {
-    expect(buildStrategyConfig({ profile: "aggressive", timeframe: "15m" })).toMatchObject({
+    expect(buildStrategyConfig({ profile: "aggressive", timeframe: "15m", symbol: "BTCUSDT" })).toMatchObject({
       profile: "aggressive",
       timeframe: "15m",
       riskPerTradePct: 1,
@@ -12,7 +12,7 @@ describe("buildStrategyConfig", () => {
   });
 
   it("returns the balanced 4h entry rules from the stage 2 plan", () => {
-    expect(buildStrategyConfig({ profile: "balanced", timeframe: "4h" }).entryRules).toEqual([
+    expect(buildStrategyConfig({ profile: "balanced", timeframe: "4h", symbol: "BTCUSDT" }).entryRules).toEqual([
       "Trend confirmation with EMA20/EMA50 alignment",
       "Momentum support from RSI14 and MACD histogram",
       "Participation confirmation from volume expansion",
@@ -20,13 +20,13 @@ describe("buildStrategyConfig", () => {
   });
 
   it("returns the conservative 1week exit rules", () => {
-    expect(buildStrategyConfig({ profile: "conservative", timeframe: "1week" }).exitRules).toEqual([
+    expect(buildStrategyConfig({ profile: "conservative", timeframe: "1week", symbol: "BTCUSDT" }).exitRules).toEqual([
       "Close the trade when higher-timeframe trend support breaks",
       "Close the trade when the setup loses directional confirmation",
     ]);
   });
 
   it("rejects invalid profile and timeframe pairs through request validation", () => {
-    expect(() => buildStrategyConfig({ profile: "aggressive", timeframe: "4h" })).toThrow();
+    expect(() => buildStrategyConfig({ profile: "aggressive", timeframe: "4h", symbol: "BTCUSDT" })).toThrow();
   });
 });

@@ -5,7 +5,7 @@ import { loadMarketFixture } from "@/server/market-data/load-market-fixture";
 
 describe("indicator aggregation", () => {
   it("returns complete indicators and 80 chart points", async () => {
-    const fixture = await loadMarketFixture("1h");
+    const fixture = await loadMarketFixture("BTCUSDT", "1h");
     const result = analyzeIndicators(fixture);
     expect(result.chart).toHaveLength(80);
     expect(result.latestClose).toBe(fixture.candles.at(-1)!.close);

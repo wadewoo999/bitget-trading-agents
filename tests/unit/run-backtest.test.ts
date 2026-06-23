@@ -7,7 +7,7 @@ import { runBacktest } from "@/server/strategy-lab/run-backtest";
 
 describe("runBacktest", () => {
   it("returns a schema-valid deterministic result with fixed fees and slippage", async () => {
-    const result = await runBacktest(buildStrategyConfig({ profile: "aggressive", timeframe: "15m" }));
+    const result = await runBacktest(buildStrategyConfig({ profile: "aggressive", timeframe: "15m", symbol: "BTCUSDT" }));
 
     expect(backtestResultSchema.parse(result)).toBeTruthy();
     expect(result.feeRate).toBe(0.0006);
@@ -19,6 +19,6 @@ describe("runBacktest", () => {
   });
 
   it("cleanly rejects 1week because no committed backtest fixture exists yet", async () => {
-    await expect(loadBacktestMarket("1week")).rejects.toThrow("1week backtest data is not available yet.");
+    await expect(loadBacktestMarket("BTCUSDT", "1week")).rejects.toThrow("1week backtest data is not available yet.");
   });
 });

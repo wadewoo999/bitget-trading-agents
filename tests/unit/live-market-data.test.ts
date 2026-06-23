@@ -32,6 +32,7 @@ describe("normalizeLiveMarketData", () => {
     const unordered = [candles[3]!, candles[1]!, duplicate, incomplete, ...candles];
 
     const result = normalizeLiveMarketData({
+      symbol: "BTCUSDT",
       timeframe: "1h",
       fetchedAt,
       ticker: [{ lastPr: "64000" }] as BitgetTickerPayload,
@@ -55,6 +56,7 @@ describe("normalizeLiveMarketData", () => {
     });
 
     const result = normalizeLiveMarketData({
+      symbol: "BTCUSDT",
       timeframe: "15m",
       fetchedAt: iso(start + 301 * step),
       ticker: [{ lastPr: "64000" }] as BitgetTickerPayload,
@@ -98,7 +100,7 @@ describe("normalizeLiveMarketData", () => {
     });
     vi.stubGlobal("fetch", fetchMock);
 
-    await loadLiveMarketData("1h").catch(() => undefined);
+    await loadLiveMarketData("BTCUSDT", "1h").catch(() => undefined);
 
     const candleCalls = fetchMock.mock.calls.filter(([call]) => String(call).includes("/history-candles"));
     expect(candleCalls).toHaveLength(2);
