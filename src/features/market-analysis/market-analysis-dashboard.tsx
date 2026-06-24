@@ -315,20 +315,6 @@ export function MarketAnalysisDashboard() {
 
   return (
     <main className="workspace">
-      <header className="topbar">
-        <a className="brand" href="https://github.com/wadewoo999/bitget-trading-agents">
-          BITGET / DECISION WORKSPACE
-        </a>
-        <span className={activeMode === "live" ? "data-badge live" : "data-badge sample"}>
-          {activeMode === "live" ? "LIVE DATA" : "SAMPLE DATA"}
-        </span>
-      </header>
-
-      <section className="intro">
-        <p>BITGET AI BASE CAMP HACKATHON S1</p>
-        <h1>釐清當前交易方向</h1>
-      </section>
-
       <div className="signal-desk-layout">
         <aside aria-label="control-rail" className="control-rail">
           <section className="rail-shell">

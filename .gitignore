@@ -23,3 +23,10 @@ evidence/
 .DS_Store
 *.log
 .superpowers/
+
+# Next.js auto-generated
+next-env.d.ts
+
+# Launcher compatibility wrappers (root forwarders)
+Export Live Evidence.command
+Open Bitget Demo.command

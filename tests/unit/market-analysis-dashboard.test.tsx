@@ -157,9 +157,7 @@ describe("MarketAnalysisDashboard", () => {
     const response = buildAnalysisResponse("live");
     const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
       const url = getRequestUrl(input);
-      if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "sample" }));
       if (url.includes("/api/market-feed?mode=live&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "live" }));
-      if (url === "/api/price?mode=sample") return jsonResponse(buildPriceResponse({ mode: "sample" }));
       if (url === "/api/price?mode=live") return jsonResponse(buildPriceResponse({ mode: "live" }));
       if (url === "/api/analyze" && init?.method === "POST") return jsonResponse(response);
       throw new Error(`Unexpected fetch: ${url}`);
@@ -168,11 +166,9 @@ describe("MarketAnalysisDashboard", () => {
     render(<MarketAnalysisDashboard />);
     fireEvent.click(screen.getByRole("button", { name: "1h" }));
     fireEvent.click(screen.getByRole("button", { name: "偏多" }));
-    fireEvent.click(screen.getByRole("button", { name: "LIVE" }));
     fireEvent.click(screen.getByRole("button", { name: "分析市場" }));
     await waitFor(() => expect(screen.getByText("LONG")).toBeInTheDocument());
     expect(screen.getByText("75 / 100")).toBeInTheDocument();
-    expect(fetchMock).toHaveBeenCalledTimes(6);
     const analyzeCall = fetchMock.mock.calls.find(([input, init]) => getRequestUrl(input) === "/api/analyze" && init?.method === "POST");
     expect(analyzeCall?.[1]).toMatchObject({
       method: "POST",
@@ -185,14 +181,14 @@ describe("MarketAnalysisDashboard", () => {
       "fetch",
       vi.fn(async (input: unknown, init?: RequestInit) => {
         const url = getRequestUrl(input);
-        if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) {
-          return jsonResponse(buildMarketFeedResponse({ mode: "sample" }));
+        if (url.includes("/api/market-feed?mode=live&timeframe=1h")) {
+          return jsonResponse(buildMarketFeedResponse({ mode: "live" }));
         }
-        if (url === "/api/price?mode=sample") {
-          return jsonResponse(buildPriceResponse({ mode: "sample" }));
+        if (url === "/api/price?mode=live") {
+          return jsonResponse(buildPriceResponse({ mode: "live" }));
         }
         if (url === "/api/analyze" && init?.method === "POST") {
-          return jsonResponse(buildAnalysisResponse("sample"));
+          return jsonResponse(buildAnalysisResponse("live"));
         }
         throw new Error(`Unexpected fetch: ${url}`);
       }),
@@ -225,9 +221,9 @@ describe("MarketAnalysisDashboard", () => {
   it("keeps the central command grouped after analysis", async () => {
     const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
       const url = getRequestUrl(input);
-      if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "sample" }));
-      if (url === "/api/price?mode=sample") return jsonResponse(buildPriceResponse({ mode: "sample" }));
-      if (url === "/api/analyze" && init?.method === "POST") return jsonResponse(buildAnalysisResponse("sample"));
+      if (url.includes("/api/market-feed?mode=live&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "live" }));
+      if (url === "/api/price?mode=live") return jsonResponse(buildPriceResponse({ mode: "live" }));
+      if (url === "/api/analyze" && init?.method === "POST") return jsonResponse(buildAnalysisResponse("live"));
       throw new Error(`Unexpected fetch: ${url}`);
     });
     vi.stubGlobal("fetch", fetchMock);
@@ -242,6 +238,7 @@ describe("MarketAnalysisDashboard", () => {
     const strategyLab = within(stage).getByRole("heading", { name: "Strategy Lab" });
     const decisionSnapshot = within(stage).getByText("Decision Snapshot");
 
+    expect(liveFeed.compareDocumentPosition(decisionSnapshot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(decisionSnapshot.compareDocumentPosition(strategySupport) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(strategySupport.compareDocumentPosition(strategyLab) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(stage).toContainElement(liveFeed);
@@ -252,26 +249,26 @@ describe("MarketAnalysisDashboard", () => {
 
   it("refreshes only latest price without reloading market-feed candles or replacing analysis snapshot", async () => {
     vi.useFakeTimers();
-    const analysis = buildAnalysisResponse("sample");
+    const analysis = buildAnalysisResponse("live");
     let marketFeedCalls = 0;
     let priceCalls = 0;
     const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
       const url = getRequestUrl(input);
-      if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) {
+      if (url.includes("/api/market-feed?mode=live&timeframe=1h")) {
         marketFeedCalls += 1;
         return jsonResponse(
           buildMarketFeedResponse({
-            mode: "sample",
+            mode: "live",
             price: marketFeedCalls === 1 ? 100000 : 100123,
             fetchedAt: marketFeedCalls === 1 ? "2026-06-20T00:00:00.000Z" : "2026-06-20T00:30:00.000Z",
           }),
         );
       }
-      if (url === "/api/price?mode=sample") {
+      if (url === "/api/price?mode=live") {
         priceCalls += 1;
         return jsonResponse(
           buildPriceResponse({
-            mode: "sample",
+            mode: "live",
             price: priceCalls === 1 ? 100000 : 100123,
             fetchedAt: priceCalls === 1 ? "2026-06-20T00:00:00.000Z" : "2026-06-20T00:30:00.000Z",
           }),
@@ -307,43 +304,6 @@ describe("MarketAnalysisDashboard", () => {
     expect(screen.getByText((text) => text.startsWith("上次更新："))).toBeInTheDocument();
   });
 
-  it("shows refresh status and sample snapshot note in sample mode", async () => {
-    vi.useFakeTimers();
-    const firstFeed = deferredResponse();
-    vi.stubGlobal(
-      "fetch",
-      vi.fn((input: unknown) => {
-        const url = getRequestUrl(input);
-        if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) return firstFeed.promise;
-        if (url === "/api/price?mode=sample")
-          return Promise.resolve(jsonResponse(buildPriceResponse({ mode: "sample", fetchedAt: "2026-06-20T08:00:00.000Z" })));
-        throw new Error(`Unexpected fetch: ${url}`);
-      }),
-    );
-
-    render(<MarketAnalysisDashboard />);
-
-    expect(screen.getByText("更新中…")).toBeInTheDocument();
-
-    await act(async () => {
-      firstFeed.resolve(
-        jsonResponse(
-          buildMarketFeedResponse({
-            mode: "sample",
-            price: 100000,
-            fetchedAt: "2026-06-20T08:00:00.000Z",
-          }),
-        ),
-      );
-      await Promise.resolve();
-      await Promise.resolve();
-    });
-
-    expect(screen.getByText("剛剛更新")).toBeInTheDocument();
-    expect(screen.getByText((text) => text.startsWith("上次更新："))).toBeInTheDocument();
-    expect(screen.getByText("此模式每 30 秒只刷新價格；K 線與上下文仍來自固定快照。")).toBeInTheDocument();
-  });
-
   it("shows price direction feedback when the polled latest price changes", async () => {
     vi.useFakeTimers();
     let priceCalls = 0;
@@ -351,19 +311,19 @@ describe("MarketAnalysisDashboard", () => {
       "fetch",
       vi.fn(async (input: unknown) => {
         const url = getRequestUrl(input);
-        if (url.includes("/api/market-feed?mode=sample&timeframe=1h"))
+        if (url.includes("/api/market-feed?mode=live&timeframe=1h"))
           return jsonResponse(
             buildMarketFeedResponse({
-              mode: "sample",
+              mode: "live",
               price: 100000,
               fetchedAt: "2026-06-20T00:00:00.000Z",
             }),
           );
-        if (url === "/api/price?mode=sample") {
+        if (url === "/api/price?mode=live") {
           priceCalls += 1;
           return jsonResponse(
             buildPriceResponse({
-              mode: "sample",
+              mode: "live",
               price: priceCalls === 1 ? 100000 : 100123,
               fetchedAt: priceCalls === 1 ? "2026-06-20T00:00:00.000Z" : "2026-06-20T00:30:00.000Z",
             }),
@@ -389,13 +349,13 @@ describe("MarketAnalysisDashboard", () => {
 
   it("shows latest-price refresh error while keeping chart and analysis snapshot intact", async () => {
     vi.useFakeTimers();
-    const analysis = buildAnalysisResponse("sample");
+    const analysis = buildAnalysisResponse("live");
     let priceCalls = 0;
     const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
       const url = getRequestUrl(input);
-      if (url.includes("/api/market-feed?mode=sample&timeframe=1h"))
-        return jsonResponse(buildMarketFeedResponse({ mode: "sample", price: 100000 }));
-      if (url === "/api/price?mode=sample") {
+      if (url.includes("/api/market-feed?mode=live&timeframe=1h"))
+        return jsonResponse(buildMarketFeedResponse({ mode: "live", price: 100000 }));
+      if (url === "/api/price?mode=live") {
         priceCalls += 1;
         return { ok: false, json: async () => ({ error: { code: "UPSTREAM_TIMEOUT", message: "timeout" } }) };
       }
@@ -465,7 +425,6 @@ describe("MarketAnalysisDashboard", () => {
     );
 
     render(<MarketAnalysisDashboard />);
-    fireEvent.click(screen.getByRole("button", { name: "LIVE" }));
     fireEvent.click(screen.getByRole("button", { name: "分析市場" }));
 
     await waitFor(() => expect(screen.getByText("資料完整性")).toBeInTheDocument());
@@ -480,19 +439,19 @@ describe("MarketAnalysisDashboard", () => {
       "fetch",
       vi.fn(async (input: unknown) => {
         const url = getRequestUrl(input);
-        if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) {
+        if (url.includes("/api/market-feed?mode=live&timeframe=1h")) {
           return jsonResponse(
             buildMarketFeedResponse({
-              mode: "sample",
+              mode: "live",
               completenessWarnings: [
-                "Sample Data 為凍結快照，不代表即時市場。",
+                "Funding rate unavailable; market context is partial.",
                 "Funding rate unavailable; market context is partial.",
               ],
             }),
           );
         }
-        if (url === "/api/price?mode=sample") {
-          return jsonResponse(buildPriceResponse({ mode: "sample" }));
+        if (url === "/api/price?mode=live") {
+          return jsonResponse(buildPriceResponse({ mode: "live" }));
         }
         throw new Error(`Unexpected fetch: ${url}`);
       }),
@@ -500,8 +459,7 @@ describe("MarketAnalysisDashboard", () => {
 
     render(<MarketAnalysisDashboard />);
 
-    expect(await screen.findByText("Sample Data 為凍結快照，不代表即時市場。")).toBeInTheDocument();
-    expect(screen.getByText("Funding rate unavailable; market context is partial.")).toBeInTheDocument();
+    expect(await screen.findAllByText("Funding rate unavailable; market context is partial.")).toHaveLength(2);
   });
 
   it("renders market-feed funding and open interest for the selected timeframe", async () => {
@@ -526,107 +484,9 @@ describe("MarketAnalysisDashboard", () => {
     );
 
     render(<MarketAnalysisDashboard />);
-    fireEvent.click(screen.getByRole("button", { name: "LIVE" }));
 
     expect(await screen.findByText("Funding 0.0250%")).toBeInTheDocument();
     expect(screen.getByText("OI 54321")).toBeInTheDocument();
-  });
-
-  it("does not keep stale feed visible after mode changes", async () => {
-    const sampleFeed = deferredResponse();
-    const liveFeed = deferredResponse();
-    const fetchMock = vi.fn((input: unknown) => {
-      const url = getRequestUrl(input);
-      if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) return sampleFeed.promise;
-      if (url.includes("/api/market-feed?mode=live&timeframe=1h")) return liveFeed.promise;
-      if (url === "/api/price?mode=sample") return Promise.resolve(jsonResponse(buildPriceResponse({ mode: "sample" })));
-      if (url === "/api/price?mode=live") return Promise.resolve(jsonResponse(buildPriceResponse({ mode: "live", price: 200000 })));
-      throw new Error(`Unexpected fetch: ${url}`);
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    render(<MarketAnalysisDashboard />);
-
-    await act(async () => {
-      sampleFeed.resolve(jsonResponse(buildMarketFeedResponse({ mode: "sample", price: 100000 })));
-      await Promise.resolve();
-      await Promise.resolve();
-    });
-
-    expect(screen.getByText("100000.00")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "LIVE" }));
-
-    expect(screen.queryByText("100000.00")).not.toBeInTheDocument();
-
-    await act(async () => {
-      liveFeed.resolve(jsonResponse(buildMarketFeedResponse({ mode: "live", price: 200000 })));
-      await Promise.resolve();
-      await Promise.resolve();
-    });
-
-    expect(screen.getByText("200000.00")).toBeInTheDocument();
-
-    await act(async () => {
-      sampleFeed.resolve(jsonResponse(buildMarketFeedResponse({ mode: "sample", price: 99999 })));
-      await Promise.resolve();
-      await Promise.resolve();
-    });
-
-    expect(screen.getByText("200000.00")).toBeInTheDocument();
-    expect(screen.queryByText("99999.00")).not.toBeInTheDocument();
-    expect(screen.getByText("LIVE DATA")).toBeInTheDocument();
-  });
-
-  it("ignores late responses after dependency change and does not update after unmount", async () => {
-    const sampleFeed = deferredResponse();
-    const liveFeed = deferredResponse();
-    const pendingUnmountPoll = deferredResponse();
-    let renderCount = 0;
-
-    const fetchMock = vi.fn((input: unknown) => {
-      const url = getRequestUrl(input);
-      if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) {
-        renderCount += 1;
-        return renderCount === 1 ? sampleFeed.promise : pendingUnmountPoll.promise;
-      }
-      if (url.includes("/api/market-feed?mode=live&timeframe=1h")) return liveFeed.promise;
-      if (url === "/api/price?mode=sample") return Promise.resolve(jsonResponse(buildPriceResponse({ mode: "sample" })));
-      if (url === "/api/price?mode=live") return Promise.resolve(jsonResponse(buildPriceResponse({ mode: "live", price: 200000, fetchedAt: "2026-06-20T00:30:00.000Z" })));
-      throw new Error(`Unexpected fetch: ${url}`);
-    });
-    vi.stubGlobal("fetch", fetchMock);
-
-    const { unmount } = render(<MarketAnalysisDashboard />);
-    fireEvent.click(screen.getByRole("button", { name: "LIVE" }));
-
-    await act(async () => {
-      liveFeed.resolve(jsonResponse(buildMarketFeedResponse({ mode: "live", price: 200000, fetchedAt: "2026-06-20T00:30:00.000Z" })));
-      await Promise.resolve();
-      await Promise.resolve();
-    });
-
-    expect(screen.getByText("200000.00")).toBeInTheDocument();
-
-    await act(async () => {
-      sampleFeed.resolve(jsonResponse(buildMarketFeedResponse({ mode: "sample", price: 100000, fetchedAt: "2026-06-20T00:00:00.000Z" })));
-      await Promise.resolve();
-      await Promise.resolve();
-    });
-
-    expect(screen.getByText("200000.00")).toBeInTheDocument();
-    expect(screen.queryByText("100000.00")).not.toBeInTheDocument();
-
-    unmount();
-
-    const pendingRender = render(<MarketAnalysisDashboard />);
-    pendingRender.unmount();
-
-    await act(async () => {
-      pendingUnmountPoll.resolve(jsonResponse(buildMarketFeedResponse({ mode: "sample", price: 300000, fetchedAt: "2026-06-20T01:00:00.000Z" })));
-      await Promise.resolve();
-      await Promise.resolve();
-    });
   });
 
   it("can preview, confirm, and close one paper trade", async () => {
@@ -634,7 +494,6 @@ describe("MarketAnalysisDashboard", () => {
     let priceCalls = 0;
     const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
       const url = getRequestUrl(input);
-      if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "sample" }));
       if (url.includes("/api/market-feed?mode=live&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "live" }));
       if (url === "/api/analyze" && init?.method === "POST") return jsonResponse(response);
       if (url === "/api/price?mode=live") {
@@ -650,7 +509,6 @@ describe("MarketAnalysisDashboard", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<MarketAnalysisDashboard />);
-    fireEvent.click(screen.getByRole("button", { name: "LIVE" }));
     fireEvent.click(screen.getByRole("button", { name: "分析市場" }));
     await waitFor(() => expect(screen.getByText("LONG")).toBeInTheDocument());
 
@@ -670,7 +528,6 @@ describe("MarketAnalysisDashboard", () => {
     const response = buildAnalysisResponse("live");
     const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
       const url = getRequestUrl(input);
-      if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "sample" }));
       if (url.includes("/api/market-feed?mode=live&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "live" }));
       if (url === "/api/analyze" && init?.method === "POST") return jsonResponse(response);
       if (url === "/api/price?mode=live") {
@@ -686,7 +543,6 @@ describe("MarketAnalysisDashboard", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<MarketAnalysisDashboard />);
-    fireEvent.click(screen.getByRole("button", { name: "LIVE" }));
     fireEvent.click(screen.getByRole("button", { name: "分析市場" }));
     await waitFor(() => expect(screen.getByText("LONG")).toBeInTheDocument());
 
@@ -701,7 +557,6 @@ describe("MarketAnalysisDashboard", () => {
     let priceCalls = 0;
     const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
       const url = getRequestUrl(input);
-      if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "sample" }));
       if (url.includes("/api/market-feed?mode=live&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "live" }));
       if (url === "/api/analyze" && init?.method === "POST") return jsonResponse(response);
       if (url === "/api/price?mode=live") {
@@ -722,7 +577,6 @@ describe("MarketAnalysisDashboard", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<MarketAnalysisDashboard />);
-    fireEvent.click(screen.getByRole("button", { name: "LIVE" }));
     fireEvent.click(screen.getByRole("button", { name: "分析市場" }));
     await waitFor(() => expect(screen.getByText("LONG")).toBeInTheDocument());
 
@@ -744,9 +598,7 @@ describe("MarketAnalysisDashboard", () => {
       "fetch",
       vi.fn(async (input: unknown, init?: RequestInit) => {
         const url = getRequestUrl(input);
-        if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "sample" }));
         if (url.includes("/api/market-feed?mode=live&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "live" }));
-        if (url === "/api/price?mode=sample") return jsonResponse(buildPriceResponse({ mode: "sample" }));
         if (url === "/api/price?mode=live") return jsonResponse(buildPriceResponse({ mode: "live" }));
         if (url === "/api/analyze" && init?.method === "POST") return jsonResponse(response);
         throw new Error(`Unexpected fetch: ${url}`);
@@ -754,7 +606,6 @@ describe("MarketAnalysisDashboard", () => {
     );
 
     render(<MarketAnalysisDashboard />);
-    fireEvent.click(screen.getByRole("button", { name: "LIVE" }));
     fireEvent.click(screen.getByRole("button", { name: "分析市場" }));
     await waitFor(() => expect(screen.getByText("LONG")).toBeInTheDocument());
 
@@ -765,7 +616,6 @@ describe("MarketAnalysisDashboard", () => {
     const response = buildAnalysisResponse("live");
     const fetchMock = vi.fn(async (input: unknown, init?: RequestInit) => {
       const url = getRequestUrl(input);
-      if (url.includes("/api/market-feed?mode=sample&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "sample" }));
       if (url.includes("/api/market-feed?mode=live&timeframe=1h")) return jsonResponse(buildMarketFeedResponse({ mode: "live" }));
       if (url === "/api/analyze" && init?.method === "POST") return jsonResponse(response);
       if (url === "/api/price?mode=live") {
@@ -776,7 +626,6 @@ describe("MarketAnalysisDashboard", () => {
     vi.stubGlobal("fetch", fetchMock);
 
     render(<MarketAnalysisDashboard />);
-    fireEvent.click(screen.getByRole("button", { name: "LIVE" }));
     fireEvent.click(screen.getByRole("button", { name: "分析市場" }));
     await waitFor(() => expect(screen.getByText("LONG")).toBeInTheDocument());
 

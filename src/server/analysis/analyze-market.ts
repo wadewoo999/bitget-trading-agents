@@ -1,15 +1,11 @@
-import { analyzeResponseSchema, type AnalyzeResponse, type MarketDataMode, type Symbol, type Timeframe, type UserStance } from "@/features/market-analysis/model";
+import { analyzeResponseSchema, type AnalyzeResponse, type Symbol, type Timeframe, type UserStance } from "@/features/market-analysis/model";
 import { createDecision } from "@/server/decision/create-decision";
 import { analyzeIndicators } from "@/server/indicators/analyze-indicators";
 import { buildMarketCompletenessWarnings } from "@/server/market-data/completeness-warnings";
-import { loadMarketFixture } from "@/server/market-data/load-market-fixture";
 import { loadLiveMarketData } from "@/server/market-data/live-market-data";
-import { fixtureToNormalizedMarketData } from "@/server/market-data/normalized-market-data";
 
-export async function analyzeMarket({ symbol, timeframe, stance, mode }: { symbol: Symbol; timeframe: Timeframe; stance: UserStance; mode: MarketDataMode }): Promise<AnalyzeResponse> {
-  const marketData = mode === "sample"
-    ? fixtureToNormalizedMarketData(await loadMarketFixture(symbol, timeframe))
-    : await loadLiveMarketData(symbol, timeframe);
+export async function analyzeMarket({ symbol, timeframe, stance }: { symbol: Symbol; timeframe: Timeframe; stance: UserStance }): Promise<AnalyzeResponse> {
+  const marketData = await loadLiveMarketData(symbol, timeframe);
   const analysis = analyzeIndicators(marketData);
   const decision = createDecision({
     stance,
@@ -18,7 +14,6 @@ export async function analyzeMarket({ symbol, timeframe, stance, mode }: { symbo
     volatilityRisk: analysis.volatilityRisk,
   });
   const completenessWarnings = buildMarketCompletenessWarnings({
-    mode,
     fundingRate: marketData.fundingRate,
     openInterest: marketData.openInterest,
   });
@@ -26,7 +21,7 @@ export async function analyzeMarket({ symbol, timeframe, stance, mode }: { symbo
     snapshot: {
       symbol,
       timeframe,
-      mode,
+      mode: marketData.mode,
       fetchedAt: marketData.fetchedAt,
       sourceRequestTime: marketData.sourceRequestTime,
       lastClosedCandleAt: marketData.lastClosedCandleAt,

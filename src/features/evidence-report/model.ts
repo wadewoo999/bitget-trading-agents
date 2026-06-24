@@ -5,7 +5,7 @@ import { paperAccountSchema, paperTradeRecordSchema, type PaperAccount } from "@
 
 export const EVIDENCE_REPORT_STORAGE_KEY = "bitget-trading-agents:evidence-report:v1";
 
-export const evidenceVerificationStatusSchema = z.enum(["live-paper-evidence", "sample-demo-only"]);
+export const evidenceVerificationStatusSchema = z.literal("live-paper-evidence");
 
 export const evidenceTradeSummarySchema = z.object({
   recordCount: z.number().int().nonnegative(),
@@ -64,11 +64,8 @@ export function buildEvidenceReportSnapshot({
   const ledger = getMatchingEvidenceLedger(analysis, account);
   if (!ledger.length) throw new Error("No matching ledger records for the current analysis.");
 
-  const isLiveMode = analysis.snapshot.mode === "live";
-  const verificationStatus: EvidenceVerificationStatus = isLiveMode ? "live-paper-evidence" : "sample-demo-only";
-  const warningText = isLiveMode
-    ? "Live mode evidence can be linked as hackathon paper trading proof after public deployment."
-    : "Sample mode is not valid as live submission evidence.";
+  const verificationStatus: EvidenceVerificationStatus = "live-paper-evidence";
+  const warningText = "Live market data matched with paper trading records.";
 
   const summary = {
     recordCount: ledger.length,
@@ -88,8 +85,8 @@ export function buildEvidenceReportSnapshot({
     accountBalance: account.balance,
     summary,
     submissionNotes: {
-      isLiveMode,
-      isSubmissionReady: isLiveMode && ledger.length > 0,
+      isLiveMode: true,
+      isSubmissionReady: ledger.length > 0,
       warningText,
     },
   });

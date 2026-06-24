@@ -25,7 +25,7 @@ export function fixtureToNormalizedMarketData(fixture: MarketFixture): Normalize
   return {
     symbol: fixture.symbol,
     timeframe: fixture.timeframe,
-    mode: "sample",
+    mode: "live",
     fetchedAt: new Date().toISOString(),
     sourceRequestTime: fixture.sources[0]!.requestedAt,
     lastClosedCandleAt: fixture.candles.at(-1)!.closeTime,

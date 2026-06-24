@@ -1,102 +1,85 @@
-# Bitget Trading Agents
+# BTC Trading Decision Agent
 
-BTC Trading Decision Agent for the **Bitget AI Base Camp Hackathon S1** Trading Agent track.
+協助 Crypto 交易者在市場方向模糊、訊號衝突時，快速理解盤面並決定下一步行動。
 
-## Current status
+核心流程：**市場資料 → 技術指標計算 → 決策引擎 → 用戶確認 → Paper Trading 驗證**
 
-This repository now includes a Minimum Demo analysis slice that can switch between live Bitget market data and repository sample fixtures. It calculates deterministic BTCUSDT indicators and LONG, SHORT, or WAIT decisions across all four supported timeframes.
+- **Simulation-first**：所有交易均為模擬交易，不涉及真實資金
+- **Deterministic**：決策引擎不使用 LLM，結果穩定可重現
 
-The current Dashboard supports `LIVE DATA` and `SAMPLE DATA` analysis, `GET /api/price`, `GET /api/market-feed`, paper-trade preview/confirm/close, localStorage account restore, and JSON/CSV ledger export. It still does not execute real trades or use an LLM.
+---
 
-Analysis snapshots and market-feed refresh are now separated. Decision results stay fixed until the user reruns analysis. The 30-second refresh now updates only latest price, while the candlestick chart and market context remain tied to the current analysis snapshot.
+## 功能
 
-The market feed now displays Funding / OI, and Stage 1 Minimum Demo stabilization is complete.
+- 多幣種盤面分析（9 幣種 × 4 時間級別）
+- 技術指標計算（EMA 排列、RSI、MACD、成交量、ATR）
+- 衍生品資料整合（Funding Rate、Open Interest）
+- 決策引擎輸出 LONG / SHORT / WAIT（含信心分數與理由）
+- Paper Trading 開倉、持倉監控、平倉、損益結算
+- 交易紀錄匯出（JSON / CSV）
 
-The active next phase is Stage 2: product completion. Current priority is Strategy Lab, deterministic backtesting, and dashboard / evidence UX polish. GetAgent Playbook, public deployment, and submission packaging are intentionally deferred until the product body is complete.
+---
 
-## Evidence report
+## 本地運行
 
-After running an analysis and creating at least one matching paper-trading ledger record, use `Generate Evidence Report` in the Dashboard to open `/evidence`.
-
-- `LIVE DATA` evidence is the submission-grade path for paper-trading proof after public deployment.
-- `SAMPLE DATA` evidence is demo-only and is clearly labeled as not valid live submission evidence.
-- Ledger `JSON` / `CSV` exports remain available separately from the full evidence report artifact.
-
-## Local setup
-
-Requirements: Node.js 22 or newer and npm.
+需求：Node.js 22 以上 + npm
 
 ```bash
 npm install
 npm run dev
 ```
 
-Quality checks:
+瀏覽器開啟 `http://localhost:3000` 即可使用 Dashboard。
 
-```bash
-npm run lint
-npm run typecheck
-npm test
-npm run build
-```
-
-Single full test entrypoint:
+一鍵驗證：
 
 ```bash
 npm run demo-check
 ```
 
-This command runs lint, typecheck, tests, production build, starts the built app locally, probes the homepage plus the core `analyze` / `price` / `market-feed` APIs in both `sample` and `live` modes, then opens the local Dashboard so you can inspect the latest UI directly.
+執行 lint、型別檢查、單元測試、建置、API 探測，確認所有功能正常。
 
-Double-click full test on macOS:
+---
 
-- Double-click [Open Bitget Demo.command](/Users/wayne/Desktop/X-Project/bitget%20hackathon/Open%20Bitget%20Demo.command)
-- It runs the same `demo-check` flow as above
-- It verifies the current feature set, starts the local demo, then opens the homepage in your browser
-- Keep the opened terminal window running while you inspect the latest UI and interactions
+## 使用流程
 
-Legacy aliases `npm run smoke` and `npm run open-visual-check` now both forward to `npm run demo-check` so the repository uses one consistent testing path.
+1. 選擇幣種（BTCUSDT / ETHUSDT / SOLUSDT 等 9 種）
+2. 選擇時間級別（15m / 1h / 4h / 1d）
+3. 選擇策略模式（激進 / 平衡 / 穩健）
+4. 點擊「分析盤面」取得決策建議
+5. 檢視技術指標與信心分數
+6. 如 confidence ≥ 60，可點擊「開倉」建立 Paper Trade
+7. 在持倉區塊點擊「平倉」結算損益
+8. 透過「下載交易紀錄」匯出 JSON 或 CSV
 
-One-command live evidence export:
+---
 
-```bash
-npm run export-live-evidence
-```
+## 支援範圍
 
-This command runs tests and build, starts the production app locally, finds the first live timeframe that returns `LONG` or `SHORT`, then exports a live paper-trading evidence bundle under `evidence/live/`.
+| 項目 | 內容 |
+|------|------|
+| 交易標的 | BTCUSDT、ETHUSDT、SOLUSDT、HYPEUSDT、BNBUSDT、XRPUSDT、SUIUSDT、DOGEUSDT、ZECUSDT |
+| 時間級別 | 15m、1h、4h、1d |
+| 策略模式 | 激進（15m + 1h）、平衡（4h + 1d）、穩健（1d + 1week） |
+| 資料來源 | Bitget 公開 API（USDT-FUTURES 市場） |
 
-Double-click live evidence export on macOS:
+---
 
-- Double-click [Export Live Evidence.command](/Users/wayne/Desktop/X-Project/bitget%20hackathon/Export%20Live%20Evidence.command)
-- It creates a fresh evidence folder containing `analysis.json`, `paper-ledger.json`, `paper-ledger.csv`, `manifest.json`, and `summary.md`
+## 決策邏輯
 
-## Project documents
+- 多維度評分：趨勢（EMA 排列）、動能（RSI、MACD）、參與度（成交量、OI）、資金（Funding Rate）
+- Confidence < 60 自動輸出 **WAIT**
+- 每次決策附帶完整理由與指標數值，可供追溯
 
-- [Current Minimum Demo design](docs/development/specs/2026-06-20-minimum-demo-design.md)
-- [Current status, gaps, and next steps](docs/development/PROJECT_STATUS_AND_NEXT_STEPS.md)
-- [Long-term product specification](docs/product/PROJECT_SPEC.md)
-- [Official hackathon requirements](docs/hackathon/OFFICIAL_HACKATHON_REQUIREMENTS.md)
-- [Development specs and plans](docs/development/)
-- [Agent instructions](AGENTS.md)
+---
 
-## Repository structure
+## 專案結構
 
-- `src/app/`: Next.js pages, API routes, and evidence entry page
-- `src/components/dashboard/`: dashboard presentation components
-- `src/features/`: product contracts and feature-facing state/model logic
-- `src/server/`: analysis, decision, market-data, indicator, and strategy-lab server logic
-- `scripts/`: one-click verification and evidence export scripts
-- `playbooks/`: checked-in GetAgent Playbook package drafts
-- `docs/development/`: current status plus implementation-facing docs
-- `docs/superpowers/`: design specs and execution plans for ongoing work
-- `docs/product/`: long-term product requirements and acceptance criteria
-- `docs/hackathon/`: official event rules and submission requirements
-- `tests/`: unit and integration coverage
-
-## Planned implementation order
-
-1. Strategy Lab, deterministic backtesting, and product completion
-2. GetAgent Playbook, sandbox evidence, and live evidence chain
-3. Public deployment, README, operation guide, evidence links, demo video, and submission package
-
-The MVP is simulation-first and does not execute real-money trades. The Hackathon-sponsored Qwen API is a development resource for the participant, not a runtime product dependency.
+- `src/app/`：Next.js 頁面、API 路由、Dashboard
+- `src/server/`：決策引擎、指標計算、市場資料擷取
+- `src/features/`：產品邏輯與狀態管理
+- `src/components/`：UI 元件
+- `scripts/`：驗證腳本與 macOS 啟動器
+- `tests/`：單元與整合測試
+- `report/`：Paper Trading 交易紀錄與分析報告
+- `docs/`：產品規格、開發文件與設計規劃

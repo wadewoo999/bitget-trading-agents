@@ -13,17 +13,16 @@ const snapshot = {
     snapshot: {
       symbol: "BTCUSDT",
       timeframe: "1h",
-      mode: "sample",
+      mode: "live",
       fetchedAt: "2026-06-21T00:00:00.000Z",
       sourceRequestTime: "2026-06-21T00:00:00.000Z",
       lastClosedCandleAt: "2026-06-20T23:00:00.000Z",
       latestPrice: 100000,
-      fixtureVersion: "btc-1h-v1",
+      fixtureVersion: null,
       indicators: {
         ema20: 101000,
         ema50: 100500,
-        ema100: 100000,
-        ema200: 99000,
+        ema80: 100000,
         rsi14: 58,
         macd: 25,
         macdSignal: 15,
@@ -49,15 +48,14 @@ const snapshot = {
       mode: "deterministic",
     },
     dataComplete: true,
-    completenessWarnings: ["Sample Data"],
+    completenessWarnings: [],
     sources: [{ name: "Bitget", url: "https://api.bitget.com", requestedAt: "2026-06-21T00:00:00.000Z" }],
     chart: Array.from({ length: 80 }, (_, index) => ({
       timestamp: new Date(Date.UTC(2026, 0, 1, index)).toISOString(),
       close: 100000 + index,
       ema20: 99900 + index,
       ema50: 99800 + index,
-      ema100: 99700 + index,
-      ema200: 99600 + index,
+      ema80: 99700 + index,
     })),
   },
   ledger: [
@@ -67,7 +65,7 @@ const snapshot = {
       timestamp: "2026-06-21T01:00:00.000Z",
       symbol: "BTCUSDT",
       timeframe: "1h",
-      mode: "sample",
+      mode: "live",
       event: "OPEN",
       side: "LONG",
       price: 100,
@@ -89,12 +87,12 @@ const snapshot = {
     totalFees: 0.06,
     realizedPnl: 0,
     latestEventAt: "2026-06-21T01:00:00.000Z",
-    verificationStatus: "sample-demo-only",
+    verificationStatus: "live-paper-evidence",
   },
   submissionNotes: {
-    isLiveMode: false,
-    isSubmissionReady: false,
-    warningText: "Sample mode is not valid as live submission evidence.",
+    isLiveMode: true,
+    isSubmissionReady: true,
+    warningText: "Live market data matched with paper trading records.",
   },
 };
 
@@ -105,7 +103,7 @@ describe("EvidencePage", () => {
     window.sessionStorage.clear();
   });
 
-  it("renders the saved snapshot and sample warning banner", () => {
+  it("renders the saved snapshot", () => {
     window.sessionStorage.setItem(EVIDENCE_REPORT_STORAGE_KEY, JSON.stringify(snapshot));
 
     render(<EvidencePage />);
@@ -114,8 +112,6 @@ describe("EvidencePage", () => {
     expect(screen.getByText("MODE")).toBeInTheDocument();
     expect(screen.getByText("ACTION")).toBeInTheDocument();
     expect(screen.getAllByText("REALIZED PNL").length).toBeGreaterThan(0);
-    expect(screen.getByText(/sample demo only/i)).toBeInTheDocument();
-    expect(screen.getByText(/sample mode is not valid as live submission evidence/i)).toBeInTheDocument();
     expect(screen.getByText("市場結構綜合偏多。")).toBeInTheDocument();
     expect(screen.getByText("OPEN")).toBeInTheDocument();
   });

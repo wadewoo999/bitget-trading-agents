@@ -7,14 +7,13 @@ export const symbolSchema = z.enum(SYMBOLS);
 
 export const timeframeSchema = z.enum(["15m", "1h", "4h", "1d"]);
 export const userStanceSchema = z.enum(["unsure", "long", "short"]);
-export const marketDataModeSchema = z.enum(["live", "sample"]);
+export const marketDataModeSchema = z.literal("live");
 
 export const marketIndicatorsSchema = z
   .object({
     ema20: z.number(),
     ema50: z.number(),
-    ema100: z.number(),
-    ema200: z.number(),
+    ema80: z.number(),
     rsi14: z.number().min(0).max(100),
     macd: z.number(),
     macdSignal: z.number(),
@@ -39,22 +38,7 @@ export const marketSnapshotSchema = z
     fixtureVersion: z.string().min(1).nullable(),
     indicators: marketIndicatorsSchema,
   })
-  .superRefine(({ fixtureVersion, mode }, context) => {
-    if (mode === "sample" && fixtureVersion === null) {
-      context.addIssue({
-        code: "custom",
-        path: ["fixtureVersion"],
-        message: "Sample data requires a fixture version",
-      });
-    }
-    if (mode === "live" && fixtureVersion !== null) {
-      context.addIssue({
-        code: "custom",
-        path: ["fixtureVersion"],
-        message: "Live data cannot declare a fixture version",
-      });
-    }
-  });
+  .strict();
 
 export const marketSourceSchema = z.object({
   name: z.string().min(1),
@@ -67,8 +51,7 @@ export const chartPointSchema = z.object({
   close: z.number().positive(),
   ema20: z.number().positive(),
   ema50: z.number().positive(),
-  ema100: z.number().positive(),
-  ema200: z.number().positive(),
+  ema80: z.number().positive(),
 });
 
 export const analyzeRequestSchema = z.object({
@@ -98,22 +81,7 @@ export const priceResponseSchema = z
     fetchedAt: z.string().datetime(),
     fixtureVersion: z.string().min(1).nullable(),
   })
-  .superRefine(({ fixtureVersion, mode }, context) => {
-    if (mode === "sample" && fixtureVersion === null) {
-      context.addIssue({
-        code: "custom",
-        path: ["fixtureVersion"],
-        message: "Sample prices require a fixture version",
-      });
-    }
-    if (mode === "live" && fixtureVersion !== null) {
-      context.addIssue({
-        code: "custom",
-        path: ["fixtureVersion"],
-        message: "Live prices cannot declare a fixture version",
-      });
-    }
-  });
+  .strict();
 
 export const marketFeedQuerySchema = z.object({
   mode: marketDataModeSchema,
@@ -146,22 +114,7 @@ export const marketFeedResponseSchema = z
     completenessWarnings: z.array(z.string().min(1)),
     candles: z.array(marketFeedCandleSchema).length(MARKET_FEED_CANDLE_COUNT),
   })
-  .superRefine(({ fixtureVersion, mode }, context) => {
-    if (mode === "sample" && fixtureVersion === null) {
-      context.addIssue({
-        code: "custom",
-        path: ["fixtureVersion"],
-        message: "Sample market-feed requires a fixture version",
-      });
-    }
-    if (mode === "live" && fixtureVersion !== null) {
-      context.addIssue({
-        code: "custom",
-        path: ["fixtureVersion"],
-        message: "Live market-feed cannot declare a fixture version",
-      });
-    }
-  });
+  .strict();
 
 export const apiErrorCodeSchema = z.enum([
   "INVALID_INPUT",

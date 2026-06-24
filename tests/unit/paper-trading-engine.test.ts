@@ -24,8 +24,7 @@ const analysis: AnalyzeResponse = {
     indicators: {
       ema20: 101000,
       ema50: 100500,
-      ema100: 99900,
-      ema200: 99000,
+      ema80: 99900,
       rsi14: 58,
       macd: 40,
       macdSignal: 20,
@@ -58,8 +57,7 @@ const analysis: AnalyzeResponse = {
     close: 100000 + index,
     ema20: 99900 + index,
     ema50: 99800 + index,
-    ema100: 99700 + index,
-    ema200: 99600 + index,
+    ema80: 99700 + index,
   })),
 };
 

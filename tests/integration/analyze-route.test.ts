@@ -16,12 +16,6 @@ function createBitgetResponse(payload: unknown) {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("POST /api/analyze", () => {
-  it("returns validated Sample analysis", async () => {
-    const response = await POST(request({ symbol: "BTCUSDT", timeframe: "1h", stance: "long", mode: "sample" }));
-    expect(response.status).toBe(200);
-    expect((await response.json()).chart).toHaveLength(80);
-  });
-
   it("rejects invalid input", async () => {
     expect((await POST(request({ symbol: "BTCUSDT" }))).status).toBe(400);
   });

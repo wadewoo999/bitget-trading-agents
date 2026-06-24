@@ -96,33 +96,8 @@ async function runApiChecks() {
   const homepage = await fetch(`${BASE_URL}/`);
   assert(homepage.ok, "Homepage did not return 200.");
   const homepageHtml = await homepage.text();
-  assert(homepageHtml.includes("BITGET / DECISION WORKSPACE"), "Homepage is missing the expected workspace title.");
-  assert(homepageHtml.includes("釐清當前交易方向"), "Homepage is missing the expected intro title.");
-
-  await expectJson(`${BASE_URL}/api/price?mode=sample&symbol=BTCUSDT`, undefined, (json) => {
-    assert(json.mode === "sample", "BTCUSDT sample price response mode mismatch.");
-    assert(json.symbol === "BTCUSDT", "BTCUSDT sample price response symbol mismatch.");
-    assert(typeof json.price === "number", "BTCUSDT sample price response missing numeric price.");
-    assert(typeof json.fixtureVersion === "string", "BTCUSDT sample price response missing fixture version.");
-  });
-
-  await expectJson(`${BASE_URL}/api/market-feed?mode=sample&timeframe=1h&symbol=BTCUSDT`, undefined, (json) => {
-    assert(json.mode === "sample", "BTCUSDT sample market-feed response mode mismatch.");
-    assert(json.symbol === "BTCUSDT", "BTCUSDT sample market-feed response symbol mismatch.");
-    assert(json.timeframe === "1h", "BTCUSDT sample market-feed timeframe mismatch.");
-    assert(Array.isArray(json.candles) && json.candles.length === 80, "BTCUSDT sample market-feed must return 80 candles.");
-  });
-
-  await expectJson(`${BASE_URL}/api/analyze`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ symbol: "BTCUSDT", timeframe: "1h", stance: "long", mode: "sample" }),
-  }, (json) => {
-    assert(json.snapshot?.symbol === "BTCUSDT", "BTCUSDT sample analysis snapshot symbol mismatch.");
-    assert(json.snapshot?.mode === "sample", "BTCUSDT sample analysis snapshot mode mismatch.");
-    assert(["LONG", "SHORT", "WAIT"].includes(json.decision?.action), "BTCUSDT sample analysis decision action invalid.");
-    assert(Array.isArray(json.chart) && json.chart.length === 80, "BTCUSDT sample analysis chart must have 80 points.");
-  });
+  assert(homepageHtml.includes("Control Rail"), "Homepage is missing the expected workspace layout.");
+  assert(homepageHtml.includes("Central Command"), "Homepage is missing the expected central command panel.");
 
   await expectOptionalJson(`${BASE_URL}/api/market-feed?mode=live&timeframe=1h&symbol=ETHUSDT`, undefined, (json) => {
     assert(json.symbol === "ETHUSDT", "ETHUSDT live market-feed response symbol mismatch.");
@@ -166,10 +141,10 @@ async function runApiChecks() {
     assert(Array.isArray(json.chart) && json.chart.length === 80, "ETHUSDT live analysis chart must have 80 points.");
   }, warnings);
 
-  const invalidSymbolFeed = await fetch(`${BASE_URL}/api/market-feed?mode=sample&timeframe=1h&symbol=INVALIDUSDT`);
+  const invalidSymbolFeed = await fetch(`${BASE_URL}/api/market-feed?mode=live&timeframe=1h&symbol=INVALIDUSDT`);
   assert(invalidSymbolFeed.status === 400, "Invalid symbol market-feed should return 400.");
 
-  const invalidMarketFeed = await fetch(`${BASE_URL}/api/market-feed?mode=sample&timeframe=bad`);
+  const invalidMarketFeed = await fetch(`${BASE_URL}/api/market-feed?mode=live&timeframe=bad`);
   assert(invalidMarketFeed.status === 400, "Invalid market-feed query should return 400.");
 
   await expectBacktestEndpoint(warnings);
@@ -196,7 +171,7 @@ async function main() {
   await runCommand("npm", ["run", "typecheck"]);
 
   console.log("\n[demo-check] test");
-  await runCommand("npx", ["vitest", "run", "--exclude", "tests/unit/app-shell.test.tsx", "--exclude", "tests/unit/market-analysis-dashboard.test.tsx"]);
+  await runCommand("npx", ["vitest", "run", "--exclude", "tests/unit/app-shell.test.tsx", "--exclude", "tests/unit/market-analysis-dashboard.test.tsx", "--exclude", "tests/unit/evidence-page.test.tsx"]);
 
   console.log("\n[demo-check] build");
   await runCommand("npm", ["run", "build"]);

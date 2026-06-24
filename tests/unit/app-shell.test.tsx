@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("next/navigation", () => ({
@@ -8,10 +8,10 @@ vi.mock("next/navigation", () => ({
 import HomePage from "@/app/page";
 
 describe("HomePage", () => {
-  it("renders the real Sample analysis workspace", () => {
+  it("renders the real live analysis workspace", () => {
     render(<HomePage />);
     expect(screen.getByRole("heading", { name: "釐清當前 BTC 交易方向" })).toBeInTheDocument();
-    expect(screen.getByText(/SAMPLE DATA/i)).toBeInTheDocument();
+    expect(screen.getByText(/LIVE DATA/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "分析市場" })).toBeInTheDocument();
 
     expect(screen.getByLabelText("control-rail")).toBeInTheDocument();

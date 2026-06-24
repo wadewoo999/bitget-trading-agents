@@ -24,10 +24,10 @@ export async function GET(request: Request): Promise<Response> {
   if (!parsed.success) return error(400, "INVALID_INPUT", "請確認 mode、timeframe 與 symbol。");
 
   try {
-    return Response.json(await loadMarketFeed(parsed.data));
+    return Response.json(await loadMarketFeed({ symbol: parsed.data.symbol, timeframe: parsed.data.timeframe }));
   } catch (cause) {
     if (cause instanceof InsufficientCandlesError) {
-      return error(422, "INSUFFICIENT_CANDLES", "Insufficient closed candles.");
+      return error(422, "INSUFFICIENT_CANDLES", cause.message);
     }
     if (cause instanceof UpstreamTimeoutError) {
       return error(504, "UPSTREAM_TIMEOUT", "Bitget market-feed request timed out.");

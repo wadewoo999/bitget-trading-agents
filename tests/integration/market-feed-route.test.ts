@@ -29,22 +29,22 @@ function createCandles(count: number) {
 }
 
 describe("GET /api/market-feed", () => {
-  it("returns validated sample market-feed data", async () => {
+  it("returns validated live market-feed data", async () => {
     vi.mocked(loadMarketFeed).mockResolvedValue({
       symbol: "BTCUSDT",
-      mode: "sample",
+      mode: "live",
       timeframe: "1h",
       price: 100000,
       fetchedAt: "2026-06-21T00:00:00.000Z",
-      fixtureVersion: "fixture-2026-06-20",
+      fixtureVersion: null,
       fundingRate: 0.0001,
       openInterest: 12345,
-      completenessWarnings: ["Sample data is a frozen snapshot and not live market data."],
+      completenessWarnings: [],
       candles: createCandles(80),
     });
 
     const response = await GET(
-      new Request("http://localhost/api/market-feed?mode=sample&timeframe=1h&symbol=BTCUSDT"),
+      new Request("http://localhost/api/market-feed?mode=live&timeframe=1h&symbol=BTCUSDT"),
     );
     const json = await response.json();
 
@@ -53,7 +53,7 @@ describe("GET /api/market-feed", () => {
   });
 
   it("rejects invalid query params", async () => {
-    const response = await GET(new Request("http://localhost/api/market-feed?mode=sample&symbol=BTCUSDT"));
+    const response = await GET(new Request("http://localhost/api/market-feed?mode=live&symbol=BTCUSDT"));
     expect(response.status).toBe(400);
     expect(apiErrorSchema.parse(await response.json()).error.code).toBe("INVALID_INPUT");
   });
@@ -91,14 +91,14 @@ describe("GET /api/market-feed", () => {
     expect(() =>
       marketFeedResponseSchema.parse({
         symbol: "BTCUSDT",
-        mode: "sample",
+        mode: "live",
         timeframe: "1h",
         price: 100000,
         fetchedAt: "2026-06-21T00:00:00.000Z",
-        fixtureVersion: "fixture-2026-06-20",
+        fixtureVersion: null,
         fundingRate: 0.0001,
         openInterest: 12345,
-        completenessWarnings: ["Sample data is a frozen snapshot and not live market data."],
+        completenessWarnings: [],
         candles: createCandles(1),
       }),
     ).toThrow();

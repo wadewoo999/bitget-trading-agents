@@ -9,7 +9,7 @@ describe("indicator aggregation", () => {
     const result = analyzeIndicators(fixture);
     expect(result.chart).toHaveLength(80);
     expect(result.latestClose).toBe(fixture.candles.at(-1)!.close);
-    expect(result.indicators.ema200).toBeGreaterThan(0);
+    expect(result.indicators.ema80).toBeGreaterThan(0);
     expect(result.indicators.rsi14).toBeGreaterThanOrEqual(0);
     expect(result.indicators.rsi14).toBeLessThanOrEqual(100);
     expect(["normal", "high"]).toContain(result.volatilityRisk);

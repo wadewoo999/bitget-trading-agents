@@ -92,6 +92,13 @@ async function requestBitgetCandles(symbol: Symbol, timeframe: Timeframe) {
   return { data: candles, requestedAt, url };
 }
 
+const minCandlesByTimeframe: Record<Timeframe, number> = {
+  "15m": 250,
+  "1h": 250,
+  "4h": 250,
+  "1d": 80,
+};
+
 export function normalizeLiveMarketData({
   symbol,
   timeframe,
@@ -122,8 +129,9 @@ export function normalizeLiveMarketData({
     .sort((left, right) => Date.parse(left.openTime) - Date.parse(right.openTime))
     .filter((candle, index, values) => index === values.findIndex((value) => value.openTime === candle.openTime));
 
-  if (normalizedCandles.length < 250) {
-    throw new InsufficientCandlesError("At least 250 closed candles are required.");
+  const minCandles = minCandlesByTimeframe[timeframe];
+  if (normalizedCandles.length < minCandles) {
+    throw new InsufficientCandlesError(`At least ${minCandles} closed candles are required for ${timeframe}.`);
   }
 
   const latestTickerPrice = toNumber(ticker[0]?.lastPr);

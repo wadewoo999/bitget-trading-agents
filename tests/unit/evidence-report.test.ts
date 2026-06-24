@@ -17,8 +17,7 @@ const liveAnalysis: AnalyzeResponse = {
     indicators: {
       ema20: 101000,
       ema50: 100500,
-      ema100: 100000,
-      ema200: 99000,
+      ema80: 100000,
       rsi14: 58,
       macd: 25,
       macdSignal: 15,
@@ -51,8 +50,7 @@ const liveAnalysis: AnalyzeResponse = {
     close: 100000 + index,
     ema20: 99900 + index,
     ema50: 99800 + index,
-    ema100: 99700 + index,
-    ema200: 99600 + index,
+    ema80: 99700 + index,
   })),
 };
 
@@ -87,7 +85,7 @@ function createAccount(): PaperAccount {
         timestamp: "2026-06-21T01:30:00.000Z",
         symbol: "BTCUSDT",
         timeframe: "4h",
-        mode: "sample",
+        mode: "live",
         event: "OPEN",
         side: "LONG",
         price: 200,
@@ -98,7 +96,7 @@ function createAccount(): PaperAccount {
         pnl: 0,
         balanceBefore: 9999.94,
         balanceAfter: 9999.82,
-        decisionSummary: "樣本資料交易。",
+        decisionSummary: "市場結構綜合偏多。",
       },
       {
         id: "live-close",
@@ -124,7 +122,7 @@ function createAccount(): PaperAccount {
 }
 
 describe("evidence report snapshot", () => {
-  it("marks live matching records as submission ready", () => {
+  it("marks matching records as ready", () => {
     const snapshot = buildEvidenceReportSnapshot({
       analysis: liveAnalysis,
       account: createAccount(),
@@ -140,31 +138,6 @@ describe("evidence report snapshot", () => {
     expect(snapshot.summary.totalFees).toBeCloseTo(0.1218);
     expect(snapshot.summary.realizedPnl).toBe(3);
     expect(snapshot.summary.latestEventAt).toBe("2026-06-21T02:00:00.000Z");
-  });
-
-  it("marks sample analysis as demo only even with matching records", () => {
-    const sampleAnalysis: AnalyzeResponse = {
-      ...liveAnalysis,
-      snapshot: {
-        ...liveAnalysis.snapshot,
-        timeframe: "4h",
-        mode: "sample",
-        fixtureVersion: "btc-4h-v1",
-      },
-    };
-
-    const snapshot = buildEvidenceReportSnapshot({
-      analysis: sampleAnalysis,
-      account: createAccount(),
-      stance: "unsure",
-      generatedAt: "2026-06-21T03:00:00.000Z",
-    });
-
-    expect(snapshot.summary.verificationStatus).toBe("sample-demo-only");
-    expect(snapshot.submissionNotes.isLiveMode).toBe(false);
-    expect(snapshot.submissionNotes.isSubmissionReady).toBe(false);
-    expect(snapshot.submissionNotes.warningText).toMatch(/not valid as live submission evidence/i);
-    expect(snapshot.ledger).toHaveLength(1);
   });
 
   it("filters out ledger records with different mode timeframe or symbol", () => {

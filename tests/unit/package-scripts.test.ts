@@ -20,17 +20,22 @@ describe("package scripts", () => {
   });
 
   it("ships double-click launchers", async () => {
-    const demoLauncher = await readFile(
-      path.join(process.cwd(), "Open Bitget Demo.command"),
+    const nestedDemoLauncher = await readFile(
+      path.join(process.cwd(), "scripts", "launchers", "Open Bitget Demo.command"),
       "utf8",
     );
-    const evidenceLauncher = await readFile(
-      path.join(process.cwd(), "Export Live Evidence.command"),
+    const nestedEvidenceLauncher = await readFile(
+      path.join(
+        process.cwd(),
+        "scripts",
+        "launchers",
+        "Export Live Evidence.command",
+      ),
       "utf8",
     );
 
-    expect(demoLauncher).toContain("npm run demo-check");
-    expect(evidenceLauncher).toContain("npm run export-live-evidence");
+    expect(nestedDemoLauncher).toContain("npm run demo-check");
+    expect(nestedEvidenceLauncher).toContain("npm run export-live-evidence");
   });
 
   it("keeps demo-check aligned with the latest product verification scope", async () => {
@@ -43,6 +48,10 @@ describe("package scripts", () => {
     expect(demoCheck).toContain("/api/market-feed");
     expect(demoCheck).toContain("/api/price");
     expect(demoCheck).toContain("/api/backtest");
+    expect(demoCheck).toContain("Strategy Support");
     expect(demoCheck).toContain("Strategy Lab");
+    expect(demoCheck).toContain("Sharpe");
+    expect(demoCheck).toContain("Equity Curve");
+    expect(demoCheck).toContain("Recent Trades");
   });
 });

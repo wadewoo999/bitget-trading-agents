@@ -10,12 +10,6 @@ function createBitgetResponse(payload: unknown) {
 }
 
 describe("GET /api/price", () => {
-  it("returns sample price data", async () => {
-    const response = await GET(new Request("http://localhost/api/price?mode=sample&symbol=BTCUSDT"));
-    expect(response.status).toBe(200);
-    expect((await response.json()).fixtureVersion).toContain("1h");
-  });
-
   it("returns live price data", async () => {
     vi.stubGlobal(
       "fetch",

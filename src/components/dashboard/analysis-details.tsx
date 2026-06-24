@@ -3,8 +3,8 @@ import type { AnalyzeResponse } from "@/features/market-analysis/model";
 export function AnalysisDetails({ data }: { data: AnalyzeResponse }) {
   return (
     <>
-      <section className="detail-grid">
-        <article className="panel">
+      <section className="detail-grid risk-summary-grid">
+        <article className="panel risk-summary-card">
           <p className="panel-label">支持理由</p>
           <ul>
             {data.decision.reasons.map((reason) => (
@@ -14,7 +14,7 @@ export function AnalysisDetails({ data }: { data: AnalyzeResponse }) {
         </article>
 
         {data.completenessWarnings.length > 0 && (
-          <article className="panel">
+          <article className="panel risk-summary-card">
             <p className="panel-label">資料完整性</p>
             <ul>
               {data.completenessWarnings.map((warning) => (
@@ -25,7 +25,7 @@ export function AnalysisDetails({ data }: { data: AnalyzeResponse }) {
         )}
 
         {data.decision.riskWarnings.length > 0 && (
-          <article className="panel warning">
+          <article className="panel warning risk-summary-card">
             <p className="panel-label">風險提醒</p>
             <ul>
               {data.decision.riskWarnings.map((warning) => (
@@ -36,11 +36,10 @@ export function AnalysisDetails({ data }: { data: AnalyzeResponse }) {
         )}
       </section>
 
-      <footer className="analysis-meta">
-        <span>{data.snapshot.mode === "sample" ? `Fixture：${data.snapshot.fixtureVersion}` : "Source：Bitget live market data"}</span>
+      <footer className="analysis-meta risk-summary-meta">
+        <span>Source：Bitget live market data</span>
         <span>分析擷取：{new Date(data.snapshot.sourceRequestTime).toLocaleString("zh-TW")}</span>
         <span>最後收盤：{new Date(data.snapshot.lastClosedCandleAt).toLocaleString("zh-TW")}</span>
-        <span>此分析結果不會自動更新，若要刷新判斷請重新分析。</span>
       </footer>
     </>
   );

@@ -1,23 +1,25 @@
 # 專案現況評估與下一步
 
-> 評估日期：2026-06-22
+> 2026-06-23 同步：本文件已依目前程式碼、根目錄整理結果與最新 handoff 狀態更新。交接時請先讀 [`docs/development/HANDOFF_2026-06-23.md`](./HANDOFF_2026-06-23.md)。
+
+> 評估日期：2026-06-23
 > 評估基準：當前 repository 功能狀態與驗證結果
 > 本文件是時間點快照；功能完成度變更後必須同步更新。
 
 ## 1. 結論
 
-專案已完成 Phase 2 Sample Market Analysis、live market analysis slice，以及第一版 paper trading lifecycle，但尚未完成可核查 evidence 與公開部署，因此仍未達到 Hackathon 提交所需的完整狀態。
+專案已完成 live market analysis、paper trading lifecycle、Strategy Support，以及第一版 Strategy Lab deterministic backtest slice，但尚未完成 submission-ready evidence 鏈與公開部署，因此仍未達到 Hackathon 提交所需的完整狀態。
 
-目前最重要的缺口不是基礎架構，而是產品本體尚未補完；在產品完成前，不應優先投入公開部署與 submission 包裝。
+目前最重要的缺口已從「產品本體不存在」轉為「最後一輪產品 polish、證據鏈補全、以及公開交付整理」。產品主體已可展示，不應再把主頁退回較早的 sample/live 雙模式。
 
 以下百分比是依已實作功能、規格驗收條件及提交材料所做的規劃估算，不是自動測量結果：
 
 | 範圍 | 估算完成度 |
 |---|---:|
 | Phase 2 Sample Market Analysis | 90% |
-| Minimum Executable Demo | 72% |
-| 完整產品 | 20% |
-| Hackathon submission readiness | 30% |
+| Minimum Executable Demo | 85% |
+| 完整產品 | 45% |
+| Hackathon submission readiness | 40% |
 
 ## 2. Repository 結構
 
@@ -32,7 +34,7 @@ bitget-trading-agents/
 │   └── superpowers/           # 新版 spec / plan 交接文件
 ├── playbooks/                 # GetAgent Playbook package 草稿
 ├── fixtures/market/           # 四種 timeframe 的 Bitget 歷史快照
-├── scripts/                   # demo-check、evidence export、其他驗證腳本
+├── scripts/                   # demo-check、evidence export、launchers、legacy scripts
 ├── src/
 │   ├── app/                   # Next.js 頁面與 API routes
 │   ├── components/dashboard/  # Dashboard UI
@@ -56,7 +58,7 @@ bitget-trading-agents/
 - Decision：0–100 market bias score、`LONG`／`SHORT`／`WAIT`、confidence、理由、風險與失效條件。
 - 風險規則：`confidence < 60` 必須為 `WAIT`。
 - 圖表：最近 80 根已收盤 candle 的 K 線圖與 EMA20。
-- UI 可切換 `LIVE DATA` / `SAMPLE DATA`，並依 mode 顯示對應 badge、source metadata 與 warnings。
+- 主頁目前固定使用 live market flow；`sample` 保留在 API、tests 與 regression，供 deterministic 驗證使用。
 - Live mode 直接請求 Bitget public futures ticker、candles、funding rate 與 open interest。
 - Live mode 會移除未收盤 candle，驗證 chronological、unique 與至少 250 根 closed candles。
 - funding rate 與 open interest 缺失時明確標記 unavailable，不以 fixture 或舊值補齊。
@@ -83,7 +85,7 @@ bitget-trading-agents/
 - Strategy profile、StrategyConfig 與 BacktestResult contract。
 - GetAgent Playbook evidence contract。
 
-Strategy Lab 與 Playbook 目前只有 contract，不能視為功能已完成。
+GetAgent Playbook 目前仍是 delivery 向工作，不屬於當前主頁 runtime 主流程。
 
 ### 3.4 Paper Trading
 
@@ -94,17 +96,29 @@ Strategy Lab 與 Playbook 目前只有 contract，不能視為功能已完成。
 - localStorage 會保存 versioned account、open position 與 ledger；損壞資料會自動 reset。
 - Ledger 已可匯出 JSON 與 CSV。
 
-### 3.5 驗證證據
+### 3.5 Strategy Support / Strategy Lab
 
-2026-06-22 驗證結果：
+- `Strategy Support` 已接回主頁，會依 decision action、confidence 與 category signals 推薦對應 strategy profile。
+- 三種 profile 與週期規則：
+  - `aggressive`: `15m`、`1h`
+  - `balanced`: `4h`、`1d`
+  - `conservative`: `1d`、`1week`
+- `/api/backtest` 已可回傳 deterministic backtest 結果。
+- `Strategy Lab` 已能展示 total return、win rate、max drawdown、trade count、Sharpe ratio、equity curve 與 recent trades。
+- `Strategy Lab` 不會覆寫主 decision，也不會自動建立 paper trade。
+
+### 3.6 驗證證據
+
+2026-06-23 驗證結果：
 
 | 驗證 | 結果 |
 |---|---|
 | `npm run lint` | 通過 |
 | `npm run typecheck` | 通過 |
-| `npm test` | 22 files、98 tests 全部通過 |
+| `npm test` | 26 files、112 tests 全部通過 |
 | `npm run build` | Next.js production build 通過 |
 | Production `/api/analyze` | sample / live mode 均成功回應 |
+| Production `/api/backtest` | 成功回應 valid request，invalid request 正確回傳 400 |
 | `npm run demo-check` | 通過，且維持為唯一標準一鍵驗證入口 |
 | GitHub repository | Public |
 | Git working tree | 持續開發中，非乾淨狀態 |
@@ -115,8 +129,8 @@ Strategy Lab 與 Playbook 目前只有 contract，不能視為功能已完成。
 
 | 項目 | 目前狀態 | 優先級 |
 |---|---|---:|
-| Strategy Lab UI | 僅有 contract | P0 |
-| Deterministic backtest engine | 未實作 | P0 |
+| 首頁最後一輪視覺 polish | 主架構已完成，仍需局部調整 | P0 |
+| 文件真相同步 | 已接近完成，仍需持續保持與程式碼一致 | P0 |
 | 可核查 paper trading evidence | 已有一鍵匯出腳本，尚未提交首份產物 | P1 |
 | GetAgent Playbook | 已有草稿 package，主流程暫緩到交付前階段 | P1 |
 | Playbook sandbox backtest 與公開 evidence | 未建立 | P1 |
@@ -180,16 +194,17 @@ Sample 分析輸出不能當成 Live paper-trading evidence。
 - funding / OI 缺失時，資料完整性與風險提醒分開顯示。
 - paper trading preview、open position、ledger、evidence 頁已達可展示狀態。
 - `demo-check` 持續可用，作為唯一標準重跑驗證流程。
+- 主頁已整理成 `Control Rail` / `Central Command` / `Risk Rail` 三區版型。
+- `Strategy Support` 與 `Strategy Lab` 已接回主頁。
 
-### Stage 2：產品本體補全（目前主動進行階段）
+### Stage 2：產品本體補全（目前接近完成）
 
-本階段先把「產品完成度」拉到可以穩定展示與驗證的水準，不先處理公開部署：
+本階段重點已從「把功能做出來」轉為「把現有功能整理到可穩定展示」：
 
-1. 完成 Strategy Lab UI。
-2. 完成 deterministic backtest engine 與 `/api/backtest`。
-3. 把回測結果接回 Dashboard / Strategy Lab 畫面，能展示規則、metrics、equity curve 與 trades。
-4. 補強目前 evidence / dashboard 的可讀性與一致性，但不新增交付導向的外部整合。
-5. 保持分析主流程、paper trading 與一鍵驗證入口可持續通過。
+1. 繼續做首頁最後一輪視覺 polish。
+2. 保持文件、測試與 UI 真相一致。
+3. 保持分析主流程、paper trading、Strategy Support、Strategy Lab 與一鍵驗證入口可持續通過。
+4. 不新增無關的大功能，不把主頁退回舊互動模式。
 
 ### Stage 3：交付證據補全
 

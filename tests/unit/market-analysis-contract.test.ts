@@ -25,17 +25,16 @@ const decision = {
 const snapshot = {
   symbol: "BTCUSDT",
   timeframe: "1h",
-  mode: "sample",
+  mode: "live",
   fetchedAt: "2026-06-20T00:00:00.000Z",
   sourceRequestTime: "2026-06-20T00:00:00.000Z",
   lastClosedCandleAt: "2026-06-19T23:00:00.000Z",
   latestPrice: 100000,
-  fixtureVersion: "btc-1h-v1",
+  fixtureVersion: null,
   indicators: {
     ema20: 101000,
     ema50: 100000,
-    ema100: 99000,
-    ema200: 98000,
+    ema80: 99000,
     rsi14: 58,
     macd: 400,
     macdSignal: 300,
@@ -61,8 +60,7 @@ const chart = Array.from({ length: 80 }, (_, index) => ({
   close: 100000 + index,
   ema20: 99900 + index,
   ema50: 99800 + index,
-  ema100: 99700 + index,
-  ema200: 99600 + index,
+  ema80: 99700 + index,
 }));
 
 describe("market analysis contracts", () => {
@@ -76,7 +74,7 @@ describe("market analysis contracts", () => {
         symbol: "BTCUSDT",
         timeframe: "1h",
         stance: "long",
-        mode: "sample",
+        mode: "live",
       }).success,
     ).toBe(true);
     expect(analyzeRequestSchema.safeParse({ symbol: "BTCUSDT", timeframe: "1h" }).success).toBe(
@@ -84,7 +82,7 @@ describe("market analysis contracts", () => {
     );
   });
 
-  it("accepts a complete sample analysis response", () => {
+  it("accepts a complete analysis response", () => {
     expect(
       analyzeResponseSchema.safeParse({
         snapshot,
@@ -104,19 +102,6 @@ describe("market analysis contracts", () => {
           ...snapshot,
           indicators: { ...snapshot.indicators, openInterestChangePct: 3 },
         },
-        decision,
-        dataComplete: true,
-        completenessWarnings: [],
-        sources,
-        chart,
-      }).success,
-    ).toBe(false);
-  });
-
-  it("requires a fixture version for sample data", () => {
-    expect(
-      analyzeResponseSchema.safeParse({
-        snapshot: { ...snapshot, fixtureVersion: null },
         decision,
         dataComplete: true,
         completenessWarnings: [],
