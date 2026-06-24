@@ -95,7 +95,7 @@ export function createDecision({ stance, latestClose, indicators, volatilityRisk
   const confidence = Math.max(marketBiasScore, 100 - marketBiasScore);
   const stanceAssessment = stance === "unsure" ? "neutral" : action === "WAIT" ? "insufficient" : stance.toUpperCase() === action ? "supported" : "opposed";
   const reasons = [`趨勢訊號${label(trend)}。`, `動能訊號${label(momentum)}。`, `成交參與度${label(participation)}。`, `資金費率擁擠訊號${label(crowding)}。`];
-  const riskWarnings = ["目前使用凍結的 Sample Data，不代表即時市場。"];
+  const riskWarnings: string[] = [];
   if (indicators.rsi14 < 30 || indicators.rsi14 > 70) riskWarnings.push("RSI 位於延伸區間，價格反轉風險提高。");
   if (volatilityRisk === "high") riskWarnings.push("ATR 波動率高於近期第 80 百分位。 ");
   const summary = [

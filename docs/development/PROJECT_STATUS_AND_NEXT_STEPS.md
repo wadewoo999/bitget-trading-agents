@@ -1,8 +1,6 @@
 # 專案現況評估與下一步
 
-> 2026-06-23 同步：本文件已依目前程式碼、根目錄整理結果與最新 handoff 狀態更新。交接時請先讀 [`docs/development/HANDOFF_2026-06-23.md`](./HANDOFF_2026-06-23.md)。
-
-> 評估日期：2026-06-23
+> 評估日期：2026-06-24
 > 評估基準：當前 repository 功能狀態與驗證結果
 > 本文件是時間點快照；功能完成度變更後必須同步更新。
 
@@ -16,10 +14,9 @@
 
 | 範圍 | 估算完成度 |
 |---|---:|
-| Phase 2 Sample Market Analysis | 90% |
-| Minimum Executable Demo | 85% |
-| 完整產品 | 45% |
-| Hackathon submission readiness | 40% |
+| Minimum Executable Demo | 95% |
+| 完整產品 | 50% |
+| Hackathon submission readiness | 80% |
 
 ## 2. Repository 結構
 
@@ -54,11 +51,11 @@ bitget-trading-agents/
 - 交易標的：`BTCUSDT`。
 - Timeframe：`15m`、`1h`、`4h`、`1d`。
 - 使用者觀點：`unsure`、`long`、`short`。
-- 指標：EMA 20／50／100／200、RSI 14、MACD、ATR 14、volume change、20-bar price return、funding rate、current OI。
+- 指標：EMA 20／50／80、RSI 14、MACD、ATR 14、volume change、20-bar price return、funding rate、current OI。
 - Decision：0–100 market bias score、`LONG`／`SHORT`／`WAIT`、confidence、理由、風險與失效條件。
 - 風險規則：`confidence < 60` 必須為 `WAIT`。
 - 圖表：最近 80 根已收盤 candle 的 K 線圖與 EMA20。
-- 主頁目前固定使用 live market flow；`sample` 保留在 API、tests 與 regression，供 deterministic 驗證使用。
+- 完整移除 sample mode；API、test、UI 全部使用 live market data。
 - Live mode 直接請求 Bitget public futures ticker、candles、funding rate 與 open interest。
 - Live mode 會移除未收盤 candle，驗證 chronological、unique 與至少 250 根 closed candles。
 - funding rate 與 open interest 缺失時明確標記 unavailable，不以 fixture 或舊值補齊。
@@ -72,7 +69,7 @@ bitget-trading-agents/
 - 四份 committed Bitget futures fixture。
 - 每份包含 300 根 chronological、unique、closed candles。
 - 保留 ticker、funding rate、current OI、來源 URL、request time、capture time 與 fixture version。
-- Sample runtime 與自動測試使用相同 fixture。
+- Fixture 用於後端回測與自動測試。
 - Next.js production output trace 已確認包含四份 fixture。
 
 ### 3.3 Contracts 與邊界
